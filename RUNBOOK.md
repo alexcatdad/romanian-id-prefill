@@ -73,3 +73,13 @@ After changes run `npm run verify` for root and Pages-subpath builds. PDF browse
 ## Resume
 
 Read `decisions.jsonl`, then `README.md` and this runbook. Keep source images and OCR text out of logs and persistent storage. A production server must retain the supplied content-security and privacy headers.
+
+## Contract template inspection
+
+Read `docs/CONTRACT_PARTY_FIELDS.md` before expanding extraction. Inspect supplied templates locally using pypdf text/AcroForm/widget inspection and a Poppler-rendered page; compare field names with visible labels and footnotes. Keep source documents and rendered scratch pages outside the repository. Record mapping and scope decisions without assuming every blank is mandatory. For eventual export, use synthetic data to verify field placement, Romanian diacritics, overflow and no processing requests.
+
+## Expanded ID understanding
+
+Preload the printed-text OCR model alongside the MRZ reader before file selection. Verify labeled name/CNP/document/address extraction with synthetic printed CI and CEI/CIS cases. Run actual browser OCR in MRZ-plus-printed and printed-only modes, checking conflicts, missing addresses, edits/review, cancellation, pagehide, zero processing network requests and buffer/worker cleanup. Test English/Romanian and both root and Pages hosting. Contract generation and seller/buyer orchestration are out of scope.
+
+Expanded ID verification uses `tests/browser/printed-id.spec.ts` for actual OCR and lifecycle coverage. Browser plugin is not available in this session; Playwright supplies Chromium, Firefox and desktop/mobile WebKit checks. Clear synthetic typography does not establish accuracy on real security backgrounds, glare or phone photographs. Keep reviewed fields unavailable when labels/components cannot be read. Address-text edits clear its components and component edits clear the full text, preventing contradictory reviewed representations.

@@ -1,6 +1,26 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 
 export const romanian = {
+  "Read the printed side": "Citește partea tipărită",
+  "Keep the complete card visible and upright. This reads the whole image.": "Păstrează actul complet vizibil și orientat corect. Se citește întreaga imagine.",
+  "Add one side of your ID. Include the whole card for printed details, or just the MRZ for identity fields.": "Adaugă o parte a actului. Include actul întreg pentru datele tipărite sau doar zona MRZ pentru datele de identitate.",
+  "One card side at a time. No seller or buyer records are created.": "O parte a actului pe rând. Nu se creează înregistrări pentru vânzător sau cumpărător.",
+  "Read and review your Romanian ID, without uploading it.": "Citește și verifică datele actului românesc fără a-l încărca pe un server.",
+  "Your reviewed ID details stay in this tab. Nothing was submitted.": "Datele verificate ale actului rămân în această filă. Nu s-a trimis nimic.",
+  "The full image is read for printed details and the selected MRZ is checked separately. Both OCR workers are terminated after reading.": "Imaginea întreagă este citită pentru datele tipărite, iar zona MRZ selectată este verificată separat. Ambele procese OCR sunt oprite după citire.",
+
+  "Which side are you reading?": "Ce parte a actului citești?",
+  "Side with MRZ": "Partea cu MRZ",
+  "Printed side without MRZ": "Partea tipărită fără MRZ",
+  "The whole card is also read for printed details. Include its complete address in the image.": "Se citesc și datele tipărite de pe întregul act. Include adresa completă în imagine.",
+  "Printed text has no MRZ checks. Every extracted field needs your review.": "Textul tipărit nu are verificări MRZ. Verifică fiecare câmp extras.",
+  "Read printed details": "Citește datele tipărite",
+  "Reading identity and printed details locally.": "Se citesc local datele de identitate și textul tipărit.",
+  "The printed details could not be read. Try a clearer photo.": "Datele tipărite nu au putut fi citite. Încearcă o fotografie mai clară.",
+  "MRZ not read for this side": "Zona MRZ nu a fost citită pe această parte",
+  "Printed OCR confidence": "Încredere OCR pentru textul tipărit",
+  "Printed details could not be read. They remain blank.": "Datele tipărite nu au putut fi citite. Câmpurile rămân goale.",
+
   "Choose a PDF page": "Alege o pagină din PDF",
   "Choose the page containing your identity card. Next, select its MRZ.": "Alege pagina care conține cartea de identitate. Apoi selectează zona MRZ.",
   "Rendering the page on this device…": "Se pregătește pagina pe acest dispozitiv…",

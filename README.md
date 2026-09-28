@@ -1,6 +1,6 @@
 # Local ID — Romanian identity-card prefill
 
-A TypeScript browser app that reads a Romanian identity card’s machine-readable zone (MRZ), extracts a name and CNP when available, validates them, and fills a local example form **only after human review**. The source PDF/image and all rendering/OCR processing stay in the browser. There is no backend, upload, account, analytics, or saved history.
+A TypeScript browser app that reads a Romanian identity card’s machine-readable zone (MRZ), extracts name, CNP, document series/number and printed domicile candidates when available, validates the encoded identity fields, and displays reviewed ID details **only after human review**. The source PDF/image and all rendering/OCR processing stay in the browser. There is no backend, upload, account, analytics, or saved history.
 
 [Public repository](https://github.com/alexcatdad/romanian-id-prefill). GitHub Pages is the primary deployment target; Vercel is a supported static alternative. **[Live app](https://alexcatdad.github.io/romanian-id-prefill/)** — first published with user approval on 2026-09-28. Deployments remain manual; pushing source or passing CI does not publish changes.
 
@@ -16,7 +16,7 @@ A TypeScript browser app that reads a Romanian identity card’s machine-readabl
 
 Safari is the compatibility priority. The JavaScript build explicitly targets Safari/iOS 18 and modern Chromium/Firefox. [Vite documents browser-specific build targets](https://vite.dev/guide/build); [Safari 18 is a published stable baseline](https://developer.apple.com/documentation/safari-release-notes/safari-18-release-notes). Transpilation cannot supply missing browser APIs. Automated desktop/mobile WebKit tests are a regression proxy, **not certification of shipping Safari or a physical camera**: [Playwright uses its own WebKit build](https://playwright.dev/docs/browsers#webkit). See the physical Safari acceptance checklist in `RUNBOOK.md`.
 
-Use the **English / Română** switch in the header. The initial language follows the browser’s primary language (Romanian or English fallback); the selection stays in memory and resets on reload. Switching languages preserves entered details and makes no requests. Romanian UI and editable names support diacritics. MRZ names normally omit them; the reviewer can restore the spelling from the card. English/Romanian UI support does not expand OCR to general document prose.
+Use the **English / Română** switch in the header. The initial language follows the browser’s primary language (Romanian or English fallback); the selection stays in memory and resets on reload. Switching languages preserves entered details and makes no requests. Romanian UI and editable names support diacritics. MRZ names normally omit them; the reviewer can restore the spelling from the card. A separate pinned Romanian/English OCR model reads explicitly labelled printed ID fields. It is not a general document-understanding service.
 
 ## Run
 
@@ -41,10 +41,10 @@ Open `http://127.0.0.1:5173/`. Vite development mode permits its local hot-reloa
 ## Use
 
 1. Wait for **Local reader ready**. PDF/OCR reader, decoder, model and font loading finishes before file selection is enabled.
-2. Choose a JPEG, PNG, WebP or PDF file, drag one onto the page, or use the in-browser camera. For PDFs, choose the page containing the ID and select **Use this page** before cropping. Use the front of a legacy CI and the back of a newer CEI/CIS. For a safe first run, choose **Try a synthetic example**; it runs actual local OCR.
+2. Choose a JPEG, PNG, WebP or PDF file, drag one onto the page, or use the in-browser camera. For PDFs, choose the page containing the ID and select **Use this page** before cropping. For MRZ use the front of a legacy CI and the back of a newer CEI/CIS; for printed details you can read a side without MRZ separately. For a safe first run, choose **Try a synthetic example**; it runs actual local OCR.
 3. Select all MRZ rows with the crop edges or keyboard-accessible sliders. Rotate a sideways photo if necessary. An image of just the MRZ can use the whole-image selection.
-4. Choose **Read selected MRZ**. The full source image is released when the crop is made; the crop and OCR worker are cleared after processing, including errors.
-5. Compare the editable full name and CNP against your physical card. MRZ names omit diacritics and can be truncated. A valid checksum does not validate the name or prove that an ID is authentic.
+4. For a side with MRZ, choose **Read selected MRZ**: the selected zone uses the MRZ model while a temporary copy of the full rotated image uses printed-text OCR. For a side without MRZ, choose **Printed side without MRZ**, then **Read printed details**. All source/crop canvases and both OCR workers are cleared after processing, including errors.
+5. Compare every populated field against your physical card, including document number and address. Expand the address breakdown to check each component. Conflicting MRZ/printed readings are disclosed; missing values stay blank. Compare the editable full name and CNP against your physical card. MRZ names omit diacritics and can be truncated. A valid checksum does not validate the name or prove that an ID is authentic.
 6. Correct the fields if necessary, explicitly acknowledge your review, then choose **Use these details**. The example form is filled in this tab; nothing is submitted, copied, downloaded, or persisted. Any edit clears the acknowledgement. Use **Clear details** to forget the result.
 
 Camera capture requires HTTPS or localhost. Tracks stop on capture, cancel, unmount, page hide, and permission failure, including a late permission result after cancellation. File selection remains available when a camera cannot start.
@@ -56,6 +56,23 @@ Single- and multipage PDFs are rendered locally with pinned **[Mozilla PDF.js](h
 Select a page, then crop its MRZ and run the same OCR/review flow as an image. Both scanned pages and rendered text/vector pages are supported; this does not extract hidden PDF text or bypass MRZ validation. Rendering cannot improve a poor underlying scan, and arbitrary PDF fonts may be less reliable for the MRZ OCR model.
 
 Limits: 15 MB, 50 pages, 40 megapixels per embedded image, and a rendered page no larger than 2600 pixels on either side. Loading/rendering has a 45-second timeout. Password-required, damaged or unsupported documents show a local error and can be discarded. The PDF document, reader and caches are released on page selection, discard, failure or page hide; the selected page canvas survives only through the crop/OCR flow. Memory cleanup is not forensic erasure.
+
+## ID understanding scope
+
+This project reads **one uploaded card side at a time**. It does not associate seller/buyer records, assemble a contract, collect phone/email/fiscal addresses, or generate a contract PDF. Those workflows belong in the separate application. Reset clears the previous result; front/back scans are not silently merged.
+
+Two modes share the same review form:
+
+- **Side with MRZ:** checked MRZ identity and document series/number plus printed fields from the full image. MRZ failures still block confirmation. A printed CNP used when the MRZ omits it must agree with its birth date and sex.
+- **Printed side without MRZ:** candidates from explicit name, CNP, document and domicile labels. CNP checksum/date checks still apply, but no MRZ validation is claimed. Blank fields require manual completion if needed; all populated fields require review.
+
+Printed extraction uses **official Tesseract tessdata_fast Romanian (`ron`) and English (`eng`) models**, pinned to commit `87416418657359cb625c412a48b6e1d6d41c29bd`. Compressed model hashes and upstream URLs are in `public/ocr/printed-models.json`; the build verifies them. Both models and their Apache-2.0 license are local assets. The models add about 3.05 MB compressed before file selection. See [official tessdata_fast](https://github.com/tesseract-ocr/tessdata_fast). Separate workers keep the MRZ alphabet and checks unchanged.
+
+Address extraction keeps the explicitly labelled domicile section and splits marked county, locality, village, sector, street, number, block, staircase, floor and apartment. Missing or ambiguous components remain blank. Birthplace, issuing authority and CNP allocation code are never used to infer domicile. Generic card titles do not prove CEI versus CIS. Names, addresses and card type have no checksum; OCR scores are uncalibrated estimates. Manual edits reset review.
+
+**Current CEI cards do not print domicile.** A photo cannot supply chip-only data; address remains unavailable unless entered manually. [Official CEI explanation](https://carteadeidentitate.gov.ro/utile/), questions 6–7. No NFC or external address lookup is implemented.
+
+Tests use clear invented printed cards and MRZ fixtures. Glare, blur, security backgrounds, unusual label placement and damaged scans can prevent recognition. The parser deliberately does not guess absent labels or replace OCR characters to force validity. Real-photo accuracy and physical Safari acceptance remain unbenchmarked.
 
 ## Supported Romanian MRZ layouts
 
@@ -88,7 +105,7 @@ Verified on 2026-09-28:
 - Modern nationwide allocation **70**, confirmed by [MAI](https://www.mai.gov.ro/5-085-de-coduri-numerice-personale-cnp-uri-generate-prin-sistemul-informatic-integrat-pentru-emiterea-actelor-de-stare-civila-siieasc/). Historical 47/48 acceptance is a documented compatibility choice. Codes 7/8/9 do not determine a century; the app flags ambiguity and blocks confirmed prefill instead of guessing a birth year.
 - CNP/MRZ DOB and sex agreement, including manually edited values.
 
-OCR is restricted to MRZ text. If a country code is uncertain, its actual symbol-bounded pixels are separately re-read with a letter-only alphabet. This is disclosed in review; it is not a text substitution. Numeric fields and check digits are never corrected to manufacture validity. The displayed OCR score is an uncalibrated engine estimate, not an identity-verification probability. Names have no MRZ check digit, so review is always required.
+The MRZ OCR pass remains restricted to MRZ text; the separate printed-text pass produces unverified candidates. If a country code is uncertain, its actual symbol-bounded pixels are separately re-read with a letter-only alphabet. This is disclosed in review; it is not a text substitution. Numeric fields and check digits are never corrected to manufacture validity. The displayed OCR score is an uncalibrated engine estimate, not an identity-verification probability. Names have no MRZ check digit, so review is always required.
 
 ## Privacy guarantees and boundaries
 
@@ -96,11 +113,11 @@ OCR is restricted to MRZ text. If a country code is uncertain, its actual symbol
 | --- | --- | --- |
 | Open / prepare | Same-origin static app, worker, WASM, model, and fonts | Public software assets only |
 | Choose / capture / PDF page selection / crop | None | File decoded into temporary bounded canvases; file input cleared immediately; object URLs revoked |
-| OCR / parse / validate | None | Worker restricts asset loading to this origin and locks fetch/XHR/script loading before receiving its first image; streaming transports and nested workers are disabled |
-| Review / confirm | None | Name/CNP and validation details in this tab’s memory only |
+| OCR / parse / validate | None | Each OCR worker restricts asset loading to this origin and locks fetch/XHR/script loading before receiving its first image; streaming transports and nested workers are disabled |
+| Review / confirm | None | Structured ID candidates, reviewed values and validation details in this tab’s memory only |
 | Clear / leave | New reader assets may load after clearing for another scan | Canvases reset, worker terminated, fields forgotten; page-hide clears the current result |
 
-No PDF, image, crop, filename, EXIF metadata, OCR text, or result is sent to a server. The app does not write personal data to localStorage, sessionStorage, IndexedDB, cookies, Cache Storage, the clipboard, downloads, URLs, logs, or analytics. Tesseract’s model cache is disabled. Raw OCR text and bounding-box output are dropped after parsing; only fields and validation state needed for review remain. No service worker is installed.
+No PDF, image, crop, filename, EXIF metadata, OCR text, or result is sent to a server. The app does not write personal data to localStorage, sessionStorage, IndexedDB, cookies, Cache Storage, the clipboard, downloads, URLs, logs, or analytics. Tesseract’s model cache is disabled. Raw OCR text and bounding-box output are dropped after parsing; only fields and validation state needed for review remain, including the domicile section text needed to check address splitting. No service worker is installed.
 
 After the reader is ready and an image has been decoded into the crop preview, OCR and review can finish without an internet connection. Browser file-decoding behavior is a separate limit: WebKit's automated offline mode can refuse local-file reads, so an offline upload from every browser is not promised. Online decoding still makes no HTTP request and keeps the file local. A fresh worker is created for each new scan; a new scan after reset/reload needs asset access again. This is not an installable offline PWA.
 

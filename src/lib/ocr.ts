@@ -2,8 +2,9 @@ import { createWorker, OEM, PSM } from 'tesseract.js';
 import type { Line, Worker } from 'tesseract.js';
 import { assessMrz } from './mrz';
 import type { MrzAssessment } from './mrz';
+import type { PrintedIdFields } from './printed-id';
 
-export interface ScanResult { assessment: MrzAssessment; confidence: number; }
+export interface ScanResult { assessment: MrzAssessment; confidence: number; printed?: { fields: PrintedIdFields; confidence: number }; mode?: 'mrz' | 'printed'; printedError?: boolean; }
 export type ReaderProgress = { stage: 'preparing' | 'reading'; progress: number };
 
 export class LocalMrzReader {

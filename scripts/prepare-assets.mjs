@@ -54,3 +54,12 @@ for (const directory of ['cmaps', 'standard_fonts', 'wasm']) {
   }
 }
 console.log('Local PDF worker, decoder modules, and in-memory resource pack are ready.');
+
+const printedManifest = JSON.parse(await readFile(join(destination, 'printed-models.json'), 'utf8'));
+for (const model of printedManifest.models) {
+  const bytes = await readFile(join(destination, `${model.language}.traineddata.gz`));
+  if (createHash('sha256').update(bytes).digest('hex') !== model.sha256) {
+    throw new Error('Local printed-text model integrity check failed.');
+  }
+}
+console.log('Pinned local English and Romanian printed-text models verified.');

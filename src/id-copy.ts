@@ -1,0 +1,31 @@
+import { useLanguage } from './i18n';
+const copy = {
+  'I have checked all populated ID details': 'Am verificat toate datele completate ale actului',
+  'Address components': 'Componentele adresei',
+  'Document and address details are reviewed candidates; no authenticity check is performed.': 'Datele actului și adresa sunt valori propuse și verificate de tine; autenticitatea nu este verificată.',
+  'ID details': 'Datele actului',
+  'Document series': 'Seria actului',
+  'Document number': 'Numărul actului',
+  'Card type': 'Tipul actului',
+  'Unknown': 'Necunoscut',
+  'Printed address': 'Domiciliul tipărit',
+  'Village': 'Sat', 'Sector': 'Sector',
+  'County': 'Județ', 'Locality': 'Localitate', 'Street': 'Stradă', 'Street number': 'Număr stradă',
+  'Block': 'Bloc', 'Staircase': 'Scară', 'Floor': 'Etaj', 'Apartment': 'Apartament',
+  'Not read — optional manual entry': 'Necitit — completare manuală opțională',
+  'Candidate — check against your card': 'Valoare propusă — compară cu actul',
+  'Review every populated field, including document and address details, before confirming. Empty fields remain unknown.': 'Verifică fiecare câmp completat, inclusiv datele actului și adresa, înainte de confirmare. Câmpurile goale rămân necunoscute.',
+  'Printed-text reading only. MRZ structure and check digits were not verified.': 'Doar citirea textului tipărit. Structura MRZ și cifrele sale de control nu au fost verificate.',
+  'CNP checksum and date passed; no MRZ comparison': 'Cifra de control și data CNP sunt valide; fără comparație cu MRZ',
+  'Printed-text confidence': 'Încrederea citirii textului tipărit',
+  'The printed details could not be read. Enter missing details from your card or try another image.': 'Datele tipărite nu au putut fi citite. Introdu datele lipsă din act sau încearcă altă imagine.',
+  'Different readings — compare both with your card before confirming.': 'Citiri diferite — compară ambele cu actul înainte de confirmare.',
+  'Printed text': 'Text tipărit',
+  'MRZ': 'MRZ',
+  'Address may be absent from the card, especially on CEI. Do not infer an address from the CNP.': 'Adresa poate lipsi de pe act, în special pe CEI. Nu deduce adresa din CNP.',
+  'Changing the address text clears its components. Review or complete the breakdown separately.': 'Modificarea textului adresei șterge componentele. Verifică sau completează separat detaliile.',
+  'Changing a component clears the full address text to avoid conflicting values.': 'Modificarea unei componente șterge textul complet al adresei pentru a evita valori contradictorii.',
+  'Not provided': 'Nefurnizat',
+} as const;
+export type IdCopy = keyof typeof copy;
+export function useIdCopy() { const { language } = useLanguage(); return (key: IdCopy) => language === 'ro' ? copy[key] : key; }

@@ -49,7 +49,7 @@ test('synthetic TD1 OCR stays offline, clears buffers, and requires fresh review
     return { cleared: state.__canvases.every((canvas) => canvas.width === 0 && canvas.height === 0), terminated: state.__workers.every((worker) => worker.ended), count: state.__canvases.length };
   });
   expect(cleared.count).toBeGreaterThan(0); expect(cleared.cleared).toBe(true); expect(cleared.terminated).toBe(true);
-  await page.getByRole('checkbox', { name: 'I have checked the name and CNP', exact: true }).check();
+  await page.getByRole('checkbox', { name: 'I have checked all populated ID details', exact: true }).check();
   await expect(page.getByRole('button', { name: 'Use these details', exact: true })).toBeEnabled();
   await page.locator('#full-name').fill('EXEMPLU ANA-MARIA');
   await expect(page.getByRole('checkbox')).not.toBeChecked();

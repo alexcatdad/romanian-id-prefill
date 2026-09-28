@@ -5,7 +5,7 @@ import { clearCanvas } from '../lib/image';
 
 interface ImageEditorProps {
   image: HTMLCanvasElement;
-  onRead: (crop: HTMLCanvasElement) => void;
+  onRead: (crop: HTMLCanvasElement, full: HTMLCanvasElement, mode: 'mrz' | 'printed') => void;
   onCancel: () => void;
 }
 
@@ -38,6 +38,7 @@ export function ImageEditor({ image, onRead, onCancel }: ImageEditorProps) {
   const [selection, setSelection] = useState(() => initialSelection(image));
   const [error, setError] = useState('');
   const [reading, setReading] = useState(false);
+  const [mode, setMode] = useState<'mrz' | 'printed'>('mrz');
   const topId = useId();
   const bottomId = useId();
   const instructionsId = useId();
@@ -104,7 +105,7 @@ export function ImageEditor({ image, onRead, onCancel }: ImageEditorProps) {
     if (workingRef.current !== image) clearCanvas(workingRef.current);
     workingRef.current = next;
     setRotation(nextRotation);
-    setSelection(initialSelection(next));
+    setSelection(mode === 'printed' ? { top: 0, bottom: 100 } : initialSelection(next));
   }
 
   function pointerY(event: PointerEvent<HTMLCanvasElement>): number {
@@ -114,17 +115,17 @@ export function ImageEditor({ image, onRead, onCancel }: ImageEditorProps) {
   }
 
   function startDrag(event: PointerEvent<HTMLCanvasElement>) {
-    if (reading || event.button !== 0) return;
+    if (reading || mode === 'printed' || event.button !== 0) return;
     event.preventDefault();
     const y = pointerY(event);
     const rectangle = event.currentTarget.getBoundingClientRect();
     const distanceTop = Math.abs(y - selection.top) / 100 * rectangle.height;
     const distanceBottom = Math.abs(y - selection.bottom) / 100 * rectangle.height;
     const nearestEdge = distanceTop <= distanceBottom ? 'top' : 'bottom';
-    const mode = Math.min(distanceTop, distanceBottom) <= 24 || y < selection.top || y > selection.bottom
+    const dragMode = Math.min(distanceTop, distanceBottom) <= 24 || y < selection.top || y > selection.bottom
       ? nearestEdge
       : 'move';
-    dragRef.current = { pointerId: event.pointerId, mode, startY: y, selection: { ...selection } };
+    dragRef.current = { pointerId: event.pointerId, mode: dragMode, startY: y, selection: { ...selection } };
     event.currentTarget.setPointerCapture(event.pointerId);
     moveDrag(event);
   }
@@ -153,6 +154,7 @@ export function ImageEditor({ image, onRead, onCancel }: ImageEditorProps) {
   function readSelection() {
     const source = workingRef.current;
     const crop = document.createElement('canvas');
+    let full: HTMLCanvasElement | null = null;
     const top = Math.floor(source.height * selection.top / 100);
     const bottom = Math.max(top + 1, Math.ceil(source.height * selection.bottom / 100));
     crop.width = source.width;
@@ -162,9 +164,15 @@ export function ImageEditor({ image, onRead, onCancel }: ImageEditorProps) {
       if (!context || !source.width || !source.height) throw new Error('The image is unavailable.');
       context.drawImage(source, 0, top, source.width, crop.height, 0, 0, crop.width, crop.height);
       setReading(true);
-      onRead(crop);
+      full = document.createElement('canvas');
+      full.width = source.width; full.height = source.height;
+      const fullContext = full.getContext('2d');
+      if (!fullContext) { clearCanvas(full); throw new Error('Image unavailable'); }
+      fullContext.drawImage(source, 0, 0);
+      onRead(crop, full, mode);
     } catch {
       clearCanvas(crop);
+      if (full) clearCanvas(full);
       setReading(false);
       setError('We could not prepare that selection. Choose another image and try again.');
     }
@@ -172,9 +180,14 @@ export function ImageEditor({ image, onRead, onCancel }: ImageEditorProps) {
 
   return (
     <section className="image-editor" aria-label={t("Select the machine-readable zone")}>
-      <h2>{t("Select the MRZ")}</h2>
+      <h2>{mode === 'mrz' ? t("Select the MRZ") : t("Read the printed side")}</h2>
+      <fieldset className="read-mode"><legend>{t("Which side are you reading?")}</legend>
+        <label><input type="radio" name="read-mode" checked={mode === 'mrz'} disabled={reading} onChange={() => setMode('mrz')} />{t("Side with MRZ")}</label>
+        <label><input type="radio" name="read-mode" checked={mode === 'printed'} disabled={reading} onChange={() => { setMode('printed'); setSelection({ top: 0, bottom: 100 }); }} />{t("Printed side without MRZ")}</label>
+      </fieldset>
+      <p className="field-hint">{mode === 'mrz' ? t("The whole card is also read for printed details. Include its complete address in the image.") : t("Printed text has no MRZ checks. Every extracted field needs your review.")}</p>
       <p id={instructionsId} className="editor-instructions">
-        {t("Select every row of letters, numbers and < in the MRZ. Drag its edges or use the controls below.")}
+        {mode === 'mrz' ? t("Select every row of letters, numbers and < in the MRZ. Drag its edges or use the controls below.") : t("Keep the complete card visible and upright. This reads the whole image.")}
       </p>
       <canvas
         ref={previewRef}
@@ -191,10 +204,10 @@ export function ImageEditor({ image, onRead, onCancel }: ImageEditorProps) {
       <div className="image-editor-toolbar">
         <button className="button button-secondary" type="button" disabled={reading} onClick={() => rotate(-1)}>{t("Rotate left 90°")} </button>
         <button className="button button-secondary" type="button" disabled={reading} onClick={() => rotate(1)}>{t("Rotate right 90°")} </button>
-        <button className="button button-secondary" type="button" disabled={reading} onClick={() => setSelection(initialSelection(workingRef.current))}>{t("Reset crop")} </button>
+        <button className="button button-secondary" type="button" disabled={reading} onClick={() => setSelection(mode === 'printed' ? { top: 0, bottom: 100 } : initialSelection(workingRef.current))}>{t("Reset crop")} </button>
         <button className="button button-secondary" type="button" disabled={reading} onClick={() => setSelection({ top: 0, bottom: 100 })}>{t("Use whole image")} </button>
       </div>
-      <div className="crop-controls">
+      <div className="crop-controls" hidden={mode === 'printed'}>
         <div className="crop-control">
           <label htmlFor={topId}>{t("Top edge")} <span>{selection.top}%</span></label>
           <input
@@ -228,7 +241,7 @@ export function ImageEditor({ image, onRead, onCancel }: ImageEditorProps) {
       <div className="image-editor-actions">
         <button className="button button-secondary" type="button" disabled={reading} onClick={onCancel}>{t("Discard image")}</button>
         <button className="button button-primary" type="button" disabled={reading} onClick={readSelection}>
-          {reading ? t("Preparing selection…") : t("Read selected MRZ")}
+          {reading ? t("Preparing selection…") : mode === 'mrz' ? t("Read selected MRZ") : t("Read printed details")}
         </button>
       </div>
     </section>

@@ -17,7 +17,7 @@ button, a, input { -webkit-tap-highlight-color: transparent; }
 button { cursor: pointer; }
 button:disabled { cursor: default; }
 button, input { font-size: 16px; }
-button:focus-visible, a:focus-visible, input:focus-visible, section:focus-visible { outline: 3px solid #a79fe5; outline-offset: 4px; }
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, summary:focus-visible, section:focus-visible { outline: 3px solid #a79fe5; outline-offset: 4px; }
 button { transition: background 120ms ease, border-color 120ms ease, opacity 120ms ease; }
 h1, h2, h3, p { margin: 0; }
 h2 { font-size: 32px; line-height: 1.2; font-weight: 800; letter-spacing: -1.1px; }
@@ -249,3 +249,20 @@ progress::-moz-progress-bar { background: var(--accent); border-radius: 4px; }
 .pdf-page-preview[hidden] { display: none; }
 .pdf-page-count { margin-top: 18px; color: var(--muted); font-weight: 700; }
 .pdf-page-navigation { display: flex; gap: 12px; flex-wrap: wrap; margin: 16px 0; }
+
+.read-mode { border: 1px solid var(--border, #ddd); border-radius: 12px; padding: 12px; margin: 16px 0; display: grid; gap: 10px; }
+.read-mode label { display: flex; gap: 8px; align-items: center; }
+.read-mode legend { padding: 0 6px; font-weight: 600; }
+.crop-controls[hidden] { display: none; }
+fieldset.review-fields { min-width: 0; border: 0; padding: 0; gap: 12px; }
+fieldset.review-fields legend { font-size: 20px; font-weight: 700; padding: 0; margin-bottom: 12px; }
+fieldset.review-fields input, fieldset.review-fields select { width: 100%; box-sizing: border-box; }
+fieldset.review-fields select { min-height: 48px; border: 1px solid #cfd3e7; border-radius: 8px; background: white; color: #171936; padding: 10px 14px; font: inherit; }
+fieldset.review-fields details { padding: 12px 0; }
+fieldset.review-fields summary { cursor: pointer; font-weight: 700; margin-bottom: 16px; }
+fieldset.review-fields details > div { margin-top: 14px; }
+.read-mode { min-width: 0; }
+
+.review-fields textarea { width: 100%; box-sizing: border-box; min-height: 100px; resize: vertical; border: 1px solid #cfd3e7; border-radius: 8px; color: #171936; padding: 12px; font: inherit; line-height: 1.5; }
+.workspace:has(.scan-result) { align-items: start; }
+fieldset.review-fields label { margin-top: 0; margin-bottom: 8px; }

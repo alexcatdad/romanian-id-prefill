@@ -11,7 +11,7 @@ export function UploadPanel({ ready, preparing, error, onFile, onCamera, onDemo,
   const [dragging, setDragging] = useState(false);
   return <>
     <h2>{t("Add your identity card")}</h2>
-    <p className="panel-description">{t("Front of older cards, back of newer cards. Keep the MRZ visible.")}</p>
+    <p className="panel-description">{t("Add one side of your ID. Include the whole card for printed details, or just the MRZ for identity fields.")}</p>
     <div className={`drop-zone ${dragging ? 'dragging' : ''}`} onDragOver={(event) => { event.preventDefault(); if (ready) setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={(event) => { event.preventDefault(); setDragging(false); const file = event.dataTransfer.files[0]; if (ready && file) onFile(file); }}>
       <Icon name="scan" className="drop-symbol" />
       <h3>{t("Drop an image or PDF here")}</h3>
@@ -20,7 +20,7 @@ export function UploadPanel({ ready, preparing, error, onFile, onCamera, onDemo,
         <button className="button button-primary" disabled={!ready} onClick={() => input.current?.click()}><Icon name="upload" />{t("Choose file")}</button>
         <button className="button button-secondary" disabled={!ready} onClick={onCamera}><Icon name="camera" />{t("Use camera")}</button>
       </div>
-      <p className="drop-hint">{t("or choose a clear photo of just the MRZ")}</p>
+      <p className="drop-hint">{t("One card side at a time. No seller or buyer records are created.")}</p>
       <input ref={input} className="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp,application/pdf,.pdf" aria-label={t("Choose ID image or PDF")} tabIndex={-1} onChange={(event) => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ''; if (ready && file) onFile(file); }} />
     </div>
     <div className="upload-bottom">

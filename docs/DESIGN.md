@@ -30,3 +30,7 @@ Inspected the concept and production screenshot at 1536 × 1024, the live synthe
 - Mobile: stacks upload before review, keeps both image/camera actions visible, and has no horizontal overflow at 390px. Native focus outlines, keyboard crop controls, and the privacy dialog were checked.
 
 The long original-reading check list is available in a native disclosure. MRZ/CNP summaries and confidence remain visible beside the editable review fields. This is an intentional functional-state extension to the initial concept.
+
+## ID understanding extension
+
+The review now includes document series/number, explicit card-type uncertainty and printed domicile candidates. The address text is multiline; detailed components sit in an expandable section. The confirmation checkbox covers every populated field. A second read mode supports a printed side without MRZ, with clear absence-of-MRZ validation messaging. Existing visual language, English/Romanian controls and phone layout remain; no seller/buyer or contract workspace is introduced.

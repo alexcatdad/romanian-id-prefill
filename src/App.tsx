@@ -11,6 +11,9 @@ import type { ReviewedDetails } from './components/ReviewForm';
 import { ValidationSummary } from './components/ValidationSummary';
 import { LocalMrzReader } from './lib/ocr';
 import type { ScanResult } from './lib/ocr';
+import { LocalPrintedReader } from './lib/printed-ocr';
+import { assessMrz } from './lib/mrz';
+import { IdDetails } from './components/IdDetails';
 import { clearCanvas, decodeImage, prepareMrzCanvas } from './lib/image';
 import { LocalPdfReader } from './lib/pdf';
 import { pdfErrorMessage } from './lib/pdf-message';
@@ -35,6 +38,8 @@ function AppContent() {
   const crop = useRef<HTMLCanvasElement | null>(null);
   const working = useRef<HTMLCanvasElement | null>(null);
   const reader = useRef<LocalMrzReader | null>(null);
+  const printedReader = useRef<LocalPrintedReader | null>(null);
+  const printedSource = useRef<HTMLCanvasElement | null>(null);
   const pdfReader = useRef<LocalPdfReader | null>(null);
   const [pdfPages, setPdfPages] = useState(0);
   const generation = useRef(0);
@@ -42,7 +47,7 @@ function AppContent() {
   const reviewRef = useRef<HTMLElement>(null);
 
   const clearImages = useCallback(() => {
-    for (const ref of [source, crop, working]) { if (ref.current) clearCanvas(ref.current); ref.current = null; }
+    for (const ref of [source, crop, working, printedSource]) { if (ref.current) clearCanvas(ref.current); ref.current = null; }
     setImage(null);
   }, []);
 
@@ -55,12 +60,13 @@ function AppContent() {
       // used by the result screen must not trigger a processing-time request.
       await Promise.all([
         reader.current?.prepare(),
+        printedReader.current?.prepare(),
         pdfReader.current?.prepare(),
         // Load each Unicode subset explicitly: WebKit can skip subsets when
         // FontFaceSet.load is given a sample containing mixed ranges.
         ...Array.from(document.fonts, (face) => face.load()),
       ]);
-      if (generation.current === currentGeneration && reader.current?.ready) setReaderState('ready');
+      if (generation.current === currentGeneration && reader.current?.ready && printedReader.current?.ready) setReaderState('ready');
     } catch (failure) {
       if (generation.current !== currentGeneration) return;
       setReaderState('error');
@@ -71,6 +77,8 @@ function AppContent() {
   useEffect(() => {
     const localReader = new LocalMrzReader((value) => { if (value.stage === 'reading') setProgress(value.progress); });
     reader.current = localReader;
+    const localPrintedReader = new LocalPrintedReader();
+    printedReader.current = localPrintedReader;
     const localPdfReader = new LocalPdfReader();
     pdfReader.current = localPdfReader;
     void prepareReader();
@@ -84,13 +92,13 @@ function AppContent() {
       setConfirmed(null);
       setPhase('empty');
       setReaderState('stopped');
-      retirement = Promise.all([localReader.dispose(), localPdfReader.dispose()]).then(() => {});
+      retirement = Promise.all([localReader.dispose(), localPrintedReader.dispose(), localPdfReader.dispose()]).then(() => {});
     };
     const onPageHide = () => flushSync(forget);
     const onPageShow = (event: PageTransitionEvent) => { if (event.persisted) void retirement.then(prepareReader); };
     window.addEventListener('pagehide', onPageHide);
     window.addEventListener('pageshow', onPageShow);
-    return () => { generation.current += 1; clearImages(); void localReader.dispose(); void localPdfReader.dispose(); window.removeEventListener('pagehide', onPageHide); window.removeEventListener('pageshow', onPageShow); };
+    return () => { generation.current += 1; clearImages(); void localReader.dispose(); void localPrintedReader.dispose(); void localPdfReader.dispose(); window.removeEventListener('pagehide', onPageHide); window.removeEventListener('pageshow', onPageShow); };
   }, [clearImages, prepareReader]);
 
   const reset = () => {
@@ -99,7 +107,7 @@ function AppContent() {
     clearImages();
     setScan(null); setConfirmed(null); setCameraOpen(false); setError(null); setPhase('empty');
     setReaderState('preparing');
-    void Promise.all([reader.current?.dispose(), pdfReader.current?.dispose()]).then(prepareReader);
+    void Promise.all([reader.current?.dispose(), printedReader.current?.dispose(), pdfReader.current?.dispose()]).then(prepareReader);
   };
 
   const acceptCanvas = async (canvas: HTMLCanvasElement) => {
@@ -152,15 +160,24 @@ function AppContent() {
     acceptCanvas(canvas);
   };
 
-  const read = async (selected: HTMLCanvasElement) => {
+  const read = async (selected: HTMLCanvasElement, full: HTMLCanvasElement, mode: 'mrz' | 'printed') => {
     const currentGeneration = generation.current;
     crop.current = selected;
+    printedSource.current = full;
     // The full source image is no longer needed once a crop is selected.
     if (source.current) clearCanvas(source.current);
     source.current = null; setImage(null); setPhase('reading'); setReaderState('stopped'); setProgress(0); setError(null);
     try {
       working.current = prepareMrzCanvas(selected);
-      const result = await reader.current!.read(working.current);
+      const [mrzOutcome, printedOutcome] = await Promise.allSettled([
+        mode === 'mrz' ? reader.current!.read(working.current) : reader.current!.dispose().then(() => ({ assessment: assessMrz(''), confidence: 0 })),
+        printedReader.current!.read(full),
+      ]);
+      if (mrzOutcome.status === 'rejected') throw mrzOutcome.reason;
+      if (mode === 'printed' && printedOutcome.status === 'rejected') throw new Error('The printed details could not be read. Try a clearer photo.');
+      const result: ScanResult = { ...mrzOutcome.value, mode,
+        ...(printedOutcome.status === 'fulfilled' ? { printed: printedOutcome.value } : { printedError: true }),
+      };
       if (generation.current !== currentGeneration) return;
       clearImages(); setScan(result); setPhase('review');
       requestAnimationFrame(() => reviewRef.current?.focus({ preventScroll: true }));
@@ -172,7 +189,7 @@ function AppContent() {
       if (generation.current === currentGeneration) {
         clearImages();
         // Also retire a prepared worker if preprocessing failed before OCR.
-        await reader.current?.dispose();
+        await Promise.all([reader.current?.dispose(), printedReader.current?.dispose()]);
       }
     }
   };
@@ -181,18 +198,18 @@ function AppContent() {
   return <div className="app-shell">
     <header className="app-header"><a className="wordmark" href={import.meta.env.BASE_URL} aria-label={t("Local ID home")}><Icon name="scan" />Local ID</a><div className="header-actions"><LanguageSwitch /><div className="privacy-indicator"><Icon name="shield" /><span>{t("Only on this device")}</span></div></div></header>
     <main>
-      <div className="hero"><h1>{t("Your details. Your device.")}</h1><p>{t("Read your Romanian ID and prefill a form, without uploading it.")}</p></div>
+      <div className="hero"><h1>{t("Your details. Your device.")}</h1><p>{t("Read and review your Romanian ID, without uploading it.")}</p></div>
       <ol className="steps" aria-label={t("Prefill steps")}>{[t("Add your ID"), t("Read locally"), t("Review details")].map((label, index) => <li className={step === index + 1 ? 'active' : step > index + 1 ? 'complete' : ''} aria-current={step === index + 1 ? 'step' : undefined} key={label}><span className="step-number">{step > index + 1 ? <Icon name="check" /> : index + 1}</span><span>{message(label)}</span></li>)}</ol>
       <div className="workspace">
         <section className="panel upload-panel" aria-label={t("Add and read your image")}>
           {phase === 'empty' ? <UploadPanel ready={readerState === 'ready'} preparing={readerState === 'preparing'} error={message(error)} onFile={chooseFile} onCamera={() => setCameraOpen(true)} onDemo={demo} onRetry={prepareReader} /> : null}
-          {phase === 'decoding' || phase === 'reading' ? <div className="processing-state" role="status"><Icon name="scan" className="drop-symbol pulse" /><h2>{phase === 'decoding' ? t("Opening your file") : t("Reading on your device")}</h2><p>{phase === 'decoding' ? t("Preparing a temporary image in browser memory.") : t("Only the selected MRZ is being read.")}</p>{phase === 'reading' ? <progress max={1} value={progress} aria-label={t("Local OCR progress")} /> : null}<button className="button button-secondary" onClick={reset}>{t("Cancel and clear")}</button></div> : null}
+          {phase === 'decoding' || phase === 'reading' ? <div className="processing-state" role="status"><Icon name="scan" className="drop-symbol pulse" /><h2>{phase === 'decoding' ? t("Opening your file") : t("Reading on your device")}</h2><p>{phase === 'decoding' ? t("Preparing a temporary image in browser memory.") : t("Reading identity and printed details locally.")}</p>{phase === 'reading' ? <progress max={1} value={progress} aria-label={t("Local OCR progress")} /> : null}<button className="button button-secondary" onClick={reset}>{t("Cancel and clear")}</button></div> : null}
           {phase === 'pdf' && pdfReader.current ? <PdfPagePicker reader={pdfReader.current} pageCount={pdfPages} onSelect={(canvas) => { void acceptCanvas(canvas); }} onCancel={reset} /> : null}
           {phase === 'preview' && image ? <ImageEditor image={image} onRead={read} onCancel={reset} /> : null}
           {phase === 'review' || phase === 'confirmed' ? <div className="scan-result"><div className="result-heading"><span className="result-symbol"><Icon name="shield" /></span><div><h2>{t("Image discarded")}</h2><p className="panel-description">{t("Your image and reading buffers have been cleared.")}</p></div></div>{scan ? <ValidationSummary scan={scan} /> : <div className="notice warning" role="alert"><Icon name="alert" /><p>{message(error)}</p></div>}<button className="button button-secondary" onClick={reset}>{t("Read another image")}</button></div> : null}
         </section>
         <section className="panel review-panel" tabIndex={-1} ref={reviewRef} aria-label={t("Review and confirm details")}>
-          {confirmed ? <div className="confirmed-form"><Icon name="check" className="confirmed-symbol" /><h2>{t("Ready to prefill")}</h2><p className="panel-description">{t("You confirmed these details on this device.")}</p><dl><dt>{t("Full name")}</dt><dd>{confirmed.fullName}</dd><dt>CNP</dt><dd className="mono">{confirmed.cnp}</dd></dl><p className="notice success"><Icon name="check" />{t("The example form is filled. Nothing was submitted.")}</p><button className="button button-secondary" onClick={reset}>{t("Clear details")}</button></div> : <ReviewForm key={scan ? 'scan' : 'empty'} scan={scan} onConfirm={(details) => { setConfirmed(details); setPhase('confirmed'); }} />}
+          {confirmed ? <div className="confirmed-form"><Icon name="check" className="confirmed-symbol" /><h2>{t("Ready to prefill")}</h2><p className="panel-description">{t("You confirmed these details on this device.")}</p><IdDetails details={confirmed} /><p className="notice success"><Icon name="check" />{t("Your reviewed ID details stay in this tab. Nothing was submitted.")}</p><button className="button button-secondary" onClick={reset}>{t("Clear details")}</button></div> : <ReviewForm key={scan ? 'scan' : 'empty'} scan={scan} onConfirm={(details) => { setConfirmed(details); setPhase('confirmed'); }} />}
         </section>
       </div>
     </main>

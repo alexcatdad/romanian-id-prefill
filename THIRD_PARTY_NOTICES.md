@@ -8,3 +8,7 @@
 - Manrope and IBM Plex Mono fonts: SIL Open Font License 1.1, supplied by the pinned `@fontsource` packages. Their license files are copied to `public/licenses/` during preparation.
 
 No third-party service processes images or OCR in this app. These notices do not change the original licenses.
+
+## Printed ID OCR models
+
+Official Tesseract tessdata_fast English and Romanian models, commit `87416418657359cb625c412a48b6e1d6d41c29bd`, Apache License 2.0. Vendored compressed models, full license and hashes/provenance are in `public/ocr/` (`printed-models.json`). Upstream: https://github.com/tesseract-ocr/tessdata_fast .

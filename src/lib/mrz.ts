@@ -19,6 +19,14 @@ export interface MrzAssessment {
   fullName: string | null;
   cnp: string | null;
   cnpValidation: CnpValidation | null;
+  /** Document fields are exposed only after the complete MRZ passes validation. */
+  documentSeries: string | null;
+  /** Numeric portion, excluding the two-letter series and MRZ filler. */
+  documentNumber: string | null;
+  /** Encoded YYMMDD; no century or current document validity is inferred. */
+  mrzExpirationDate: string | null;
+  issuingCountry: string | null;
+  nationality: string | null;
   mrzBirthDate: string | null;
   mrzSex: string | null;
   rawLines: string[];
@@ -51,6 +59,11 @@ function emptyAssessment(
     fullName: null,
     cnp: null,
     cnpValidation: null,
+    documentSeries: null,
+    documentNumber: null,
+    mrzExpirationDate: null,
+    issuingCountry: null,
+    nationality: null,
     mrzBirthDate: null,
     mrzSex: null,
     rawLines,
@@ -239,6 +252,11 @@ function assessCandidate(lines: string[], format: Format): MrzAssessment {
     fullName,
     cnp,
     cnpValidation,
+    documentSeries: mrzValid ? document.slice(0, 2) : null,
+    documentNumber: mrzValid ? document.slice(2).replace(/<+$/, '') : null,
+    mrzExpirationDate: mrzValid ? expiry : null,
+    issuingCountry: mrzValid ? issuer : null,
+    nationality: mrzValid ? nationality : null,
     mrzBirthDate: birth,
     mrzSex: sex,
     rawLines: lines,

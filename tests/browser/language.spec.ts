@@ -45,7 +45,7 @@ test.describe('Romanian browser preference', () => {
     await expect(page.locator('#cnp')).toHaveValue(createSyntheticMrz().cnp);
     const confirm = page.getByRole('button', { name: 'Folosește aceste date', exact: true });
     await expect(confirm).toBeDisabled();
-    await page.getByRole('checkbox', { name: 'Am verificat numele și CNP-ul', exact: true }).check();
+    await page.getByRole('checkbox', { name: 'Am verificat toate datele completate ale actului', exact: true }).check();
     await confirm.click();
     await expect(page.getByRole('button', { name: 'Șterge datele', exact: true })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);

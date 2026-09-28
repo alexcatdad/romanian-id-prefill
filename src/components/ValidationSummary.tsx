@@ -1,9 +1,20 @@
 import { useLanguage } from '../i18n';
 import type { ScanResult } from '../lib/ocr';
 import { Icon } from './Icon';
+import { validateCnp } from '../lib/cnp';
 
 export function ValidationSummary({ scan }: { scan: ScanResult }) {
   const { t, message } = useLanguage();
+  if (scan.mode === 'printed') {
+    const cnpValid = validateCnp(scan.printed?.fields.cnp ?? '').valid;
+    return <div className="validation-summary">
+      <p className="notice warning">{t("MRZ not read for this side")}</p>
+      <div className="confidence-row"><span>{t("Printed OCR confidence")}</span><strong>{scan.printed?.confidence ?? 0}/100</strong></div>
+      <p className="small muted">{t("An OCR estimate, not a probability that your details are correct.")}</p>
+      <p>{t("CNP validation")}: {cnpValid ? t("Passed") : t("Needs review")}</p>
+      <p>{t("Printed text has no MRZ checks. Every extracted field needs your review.")}</p>
+    </div>;
+  }
   return <div className="validation-summary">
     <div className="confidence-row">
       <span>{t("OCR confidence")}</span>
@@ -15,6 +26,8 @@ export function ValidationSummary({ scan }: { scan: ScanResult }) {
       <p className={scan.assessment.mrzValid ? 'checked' : 'needs-review'}><Icon name={scan.assessment.mrzValid ? 'check' : 'alert'} /><span>{t("MRZ checks")}</span><strong>{scan.assessment.mrzValid ? t("Passed") : t("Failed")}</strong></p>
       <p className={scan.assessment.valid ? 'checked' : 'needs-review'}><Icon name={scan.assessment.valid ? 'check' : 'alert'} /><span>{t("CNP validation")}</span><strong>{scan.assessment.valid ? t("Passed") : t("Needs review")}</strong></p>
     </div>
+    {scan.printed ? <p className="small muted">{t("Printed OCR confidence")}: {scan.printed.confidence}/100</p> : null}
+    {scan.printedError ? <p className="notice warning">{t("Printed details could not be read. They remain blank.")}</p> : null}
     <details className="validation-details">
       <summary>{t("View all validation checks")}</summary>
       <p className="small muted">{t("These checks describe the original reading. Edited details are checked in the review form.")}</p>

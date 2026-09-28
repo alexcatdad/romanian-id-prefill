@@ -22,6 +22,24 @@ describe('assessMrz', () => {
     expect(result.checks.filter((check) => check.label.endsWith('check digit'))).toHaveLength(4);
   });
 
+  it.each(['TD1', 'TD2'] as const)('exposes checked document fields for %s without fillers or an inferred expiry century', (format) => {
+    const result = assessMrz(createSyntheticMrz(format, { expirationDate: '810913' }).lines);
+    expect(result.documentSeries).toBe('AB');
+    expect(result.documentNumber).toBe(format === 'TD1' ? '1234567' : '123456');
+    expect(result.mrzExpirationDate).toBe('810913');
+    expect(result.issuingCountry).toBe('ROU');
+    expect(result.nationality).toBe('ROU');
+  });
+
+  it('does not expose document fields for an incomplete MRZ', () => {
+    const result = assessMrz('IDROU');
+    expect(result.documentSeries).toBeNull();
+    expect(result.documentNumber).toBeNull();
+    expect(result.mrzExpirationDate).toBeNull();
+    expect(result.issuingCountry).toBeNull();
+    expect(result.nationality).toBeNull();
+  });
+
   it('reads the old CI sex/century digit from optional data rather than inferring it', () => {
     const cnp = withCnpChecksum('500022970001');
     const fixture = createSyntheticMrz('TD2', { cnp, sex: 'M' });
@@ -154,6 +172,11 @@ describe('assessMrz', () => {
     expect(result.mrzValid).toBe(false);
     expect(result.valid).toBe(false);
     expect(result.checks.some((check) => check.label.endsWith('check digit') && check.status === 'fail')).toBe(true);
+    expect(result.documentSeries).toBeNull();
+    expect(result.documentNumber).toBeNull();
+    expect(result.mrzExpirationDate).toBeNull();
+    expect(result.issuingCountry).toBeNull();
+    expect(result.nationality).toBeNull();
   });
 
   it('retains candidates when MRZ checks pass but the CNP checksum fails', () => {
@@ -165,6 +188,8 @@ describe('assessMrz', () => {
     expect(result.cnp).toBe(fixture.cnp);
     expect(result.fullName).toBe(fixture.fullName);
     expect(result.cnpValidation?.checks.checksum).toBe(false);
+    expect(result.documentSeries).toBe('AB');
+    expect(result.documentNumber).toBe('1234567');
   });
 
   it('distinguishes the official invalid-CNP specimen from a valid identity', () => {
@@ -177,6 +202,8 @@ describe('assessMrz', () => {
     expect(result.mrzValid).toBe(true);
     expect(result.valid).toBe(false);
     expect(result.cnp).toBe('2830703460094');
+    expect(result.documentSeries).toBe('SP');
+    expect(result.documentNumber).toBe('1236343');
     expect(result.cnpValidation?.checks.checksum).toBe(false);
   });
 
@@ -191,6 +218,8 @@ describe('assessMrz', () => {
     expect(result.mrzValid).toBe(true);
     expect(result.valid).toBe(false);
     expect(result.fullName).toBe('MANOLE CORINA IOANA');
+    expect(result.documentSeries).toBe('TS');
+    expect(result.documentNumber).toBe('1003024');
     expect(result.cnp).toBeNull();
     expect(result.cnpValidation).toBeNull();
     expect(result.issues.some((issue) => issue.includes('Enter the CNP'))).toBe(true);
