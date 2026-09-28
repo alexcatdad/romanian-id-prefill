@@ -58,6 +58,12 @@ Before claiming Safari acceptance, record the exact Safari/OS/device versions an
 
 Use synthetic identities for recorded evidence. Real-photo accuracy remains a separate benchmark; do not save personal IDs, OCR output or screenshots to the repository. Record untested versions/devices as unverified rather than extrapolating from Playwright.
 
+## Published release — 2026-09-28
+
+The user explicitly approved GitHub Pages publication. Accepted/deployed app commit: `d5501fb778b06bb8a4768c3838cf0aa75603c6cf`. [Deployment run](https://github.com/alexcatdad/romanian-id-prefill/actions/runs/36448225554) completed successfully after the production artifact passed its tests. GitHub Pages uses workflow builds with HTTPS enforced at [the live site](https://alexcatdad.github.io/romanian-id-prefill/).
+
+Post-deployment smoke checks passed in Chromium and WebKit against the public HTTPS site: same-origin assets, HTML CSP, actual synthetic MRZ OCR offline, mandatory review, English-to-Romanian switching, zero processing-time HTTP requests, empty browser storage, and clearing/reinitializing the reader. Physical Safari camera acceptance remains pending. The following documentation/audit commit does not change or redeploy the app.
+
 ## Resume
 
 Read `decisions.jsonl`, then `README.md` and this runbook. Keep source images and OCR text out of logs and persistent storage. A production server must retain the supplied content-security and privacy headers.

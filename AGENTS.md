@@ -4,7 +4,7 @@ Keep this browser-only: no upload endpoint, remote OCR/LLM, analytics, persisten
 
 Read `README.md`, `RUNBOOK.md`, and `decisions.jsonl` before changes. Log important decisions in `decisions.jsonl` and update the runbook when multi-command operations change. Synthetic fixtures only; never commit a real ID image, filename, raw OCR output, or personal-data screenshot.
 
-The user requested public GitHub setup and GitHub Pages deployment **after acceptance**. Source/CI work is authorized; website publication remains gated until the user explicitly accepts this MVP. Keep deployment manual and do not dispatch its workflow just because CI passes.
+The user explicitly approved initial GitHub Pages publication on 2026-09-28. The deployed commit and verification are recorded in RUNBOOK.md and decisions.jsonl. Source/CI work is authorized. Future website deployments remain manual and require user authorization; do not dispatch a workflow merely because CI passes.
 
 Use exact locked packages and local OCR assets. Parser autocorrection stays disabled. Any recognition strategy must preserve check-digit/identity constraints and disclose uncertainty. Name review is mandatory. Clean up worker, canvas, URL, and camera resources on every path.
 

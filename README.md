@@ -2,7 +2,7 @@
 
 A TypeScript browser app that reads a Romanian identity card’s machine-readable zone (MRZ), extracts a name and CNP when available, validates them, and fills a local example form **only after human review**. The source image and OCR processing stay in the browser. There is no backend, upload, account, analytics, or saved history.
 
-[Public repository](https://github.com/alexcatdad/romanian-id-prefill). GitHub Pages is the primary deployment target; Vercel is a supported static alternative. **Publication is manual and awaits the user’s acceptance of this MVP.** Pushing source or passing CI does not deploy a site.
+[Public repository](https://github.com/alexcatdad/romanian-id-prefill). GitHub Pages is the primary deployment target; Vercel is a supported static alternative. **[Live app](https://alexcatdad.github.io/romanian-id-prefill/)** — first published with user approval on 2026-09-28. Deployments remain manual; pushing source or passing CI does not publish changes.
 
 ## Deployment, browser, and language targets
 
