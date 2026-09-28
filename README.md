@@ -1,6 +1,6 @@
 # Local ID — Romanian identity-card prefill
 
-A TypeScript browser app that reads a Romanian identity card’s machine-readable zone (MRZ), extracts a name and CNP when available, validates them, and fills a local example form **only after human review**. The source image and OCR processing stay in the browser. There is no backend, upload, account, analytics, or saved history.
+A TypeScript browser app that reads a Romanian identity card’s machine-readable zone (MRZ), extracts a name and CNP when available, validates them, and fills a local example form **only after human review**. The source PDF/image and all rendering/OCR processing stay in the browser. There is no backend, upload, account, analytics, or saved history.
 
 [Public repository](https://github.com/alexcatdad/romanian-id-prefill). GitHub Pages is the primary deployment target; Vercel is a supported static alternative. **[Live app](https://alexcatdad.github.io/romanian-id-prefill/)** — first published with user approval on 2026-09-28. Deployments remain manual; pushing source or passing CI does not publish changes.
 
@@ -20,7 +20,7 @@ Use the **English / Română** switch in the header. The initial language follow
 
 ## Run
 
-Use Node.js 24 (or a supported version ≥22.12) and npm.
+Use Node.js 24 (or a supported version ≥22.13) and npm.
 
 ```sh
 npm ci
@@ -40,14 +40,22 @@ Open `http://127.0.0.1:5173/`. Vite development mode permits its local hot-reloa
 
 ## Use
 
-1. Wait for **Local reader ready**. Reader/model/font loading finishes before image selection is enabled.
-2. Choose a JPEG, PNG, or WebP image, drag one onto the page, or use the in-browser camera. Use the front of a legacy CI and the back of a newer CEI/CIS. For a safe first run, choose **Try a synthetic example**; it runs actual local OCR.
+1. Wait for **Local reader ready**. PDF/OCR reader, decoder, model and font loading finishes before file selection is enabled.
+2. Choose a JPEG, PNG, WebP or PDF file, drag one onto the page, or use the in-browser camera. For PDFs, choose the page containing the ID and select **Use this page** before cropping. Use the front of a legacy CI and the back of a newer CEI/CIS. For a safe first run, choose **Try a synthetic example**; it runs actual local OCR.
 3. Select all MRZ rows with the crop edges or keyboard-accessible sliders. Rotate a sideways photo if necessary. An image of just the MRZ can use the whole-image selection.
 4. Choose **Read selected MRZ**. The full source image is released when the crop is made; the crop and OCR worker are cleared after processing, including errors.
 5. Compare the editable full name and CNP against your physical card. MRZ names omit diacritics and can be truncated. A valid checksum does not validate the name or prove that an ID is authentic.
 6. Correct the fields if necessary, explicitly acknowledge your review, then choose **Use these details**. The example form is filled in this tab; nothing is submitted, copied, downloaded, or persisted. Any edit clears the acknowledgement. Use **Clear details** to forget the result.
 
 Camera capture requires HTTPS or localhost. Tracks stop on capture, cancel, unmount, page hide, and permission failure, including a late permission result after cancellation. File selection remains available when a camera cannot start.
+
+## PDF support
+
+Single- and multipage PDFs are rendered locally with pinned **[Mozilla PDF.js](https://mozilla.github.io/pdf.js/) 6.3.289**, using its legacy build for the Safari baseline. [Mozilla documents Safari 18+ compatibility](https://github.com/mozilla/pdf.js/wiki/Frequently-Asked-Questions). The worker, CMaps, standard fonts, WASM and fallback decoder modules are self-hosted and prepared before file selection; binary resources are served from memory during rendering. The PDF worker blocks network APIs before receiving document bytes. No PDF URL is accepted and no full viewer, links, scripts, attachments, XFA or interactive annotations are opened.
+
+Select a page, then crop its MRZ and run the same OCR/review flow as an image. Both scanned pages and rendered text/vector pages are supported; this does not extract hidden PDF text or bypass MRZ validation. Rendering cannot improve a poor underlying scan, and arbitrary PDF fonts may be less reliable for the MRZ OCR model.
+
+Limits: 15 MB, 50 pages, 40 megapixels per embedded image, and a rendered page no larger than 2600 pixels on either side. Loading/rendering has a 45-second timeout. Password-required, damaged or unsupported documents show a local error and can be discarded. The PDF document, reader and caches are released on page selection, discard, failure or page hide; the selected page canvas survives only through the crop/OCR flow. Memory cleanup is not forensic erasure.
 
 ## Supported Romanian MRZ layouts
 
@@ -87,12 +95,12 @@ OCR is restricted to MRZ text. If a country code is uncertain, its actual symbol
 | Stage | Network | Data lifetime |
 | --- | --- | --- |
 | Open / prepare | Same-origin static app, worker, WASM, model, and fonts | Public software assets only |
-| Choose / capture / crop | None | File decoded into temporary bounded canvases; file input cleared immediately; object URLs revoked |
+| Choose / capture / PDF page selection / crop | None | File decoded into temporary bounded canvases; file input cleared immediately; object URLs revoked |
 | OCR / parse / validate | None | Worker restricts asset loading to this origin and locks fetch/XHR/script loading before receiving its first image; streaming transports and nested workers are disabled |
 | Review / confirm | None | Name/CNP and validation details in this tab’s memory only |
 | Clear / leave | New reader assets may load after clearing for another scan | Canvases reset, worker terminated, fields forgotten; page-hide clears the current result |
 
-No image, crop, filename, EXIF metadata, OCR text, or result is sent to a server. The app does not write personal data to localStorage, sessionStorage, IndexedDB, cookies, Cache Storage, the clipboard, downloads, URLs, logs, or analytics. Tesseract’s model cache is disabled. Raw OCR text and bounding-box output are dropped after parsing; only fields and validation state needed for review remain. No service worker is installed.
+No PDF, image, crop, filename, EXIF metadata, OCR text, or result is sent to a server. The app does not write personal data to localStorage, sessionStorage, IndexedDB, cookies, Cache Storage, the clipboard, downloads, URLs, logs, or analytics. Tesseract’s model cache is disabled. Raw OCR text and bounding-box output are dropped after parsing; only fields and validation state needed for review remain. No service worker is installed.
 
 After the reader is ready and an image has been decoded into the crop preview, OCR and review can finish without an internet connection. Browser file-decoding behavior is a separate limit: WebKit's automated offline mode can refuse local-file reads, so an offline upload from every browser is not promised. Online decoding still makes no HTTP request and keeps the file local. A fresh worker is created for each new scan; a new scan after reset/reload needs asset access again. This is not an installable offline PWA.
 
@@ -109,7 +117,7 @@ npx playwright install chromium firefox webkit
 npm run verify
 ```
 
-Unit tests cover both Romanian MRZ encodings, CIS without CNP, all ICAO check-digit failures, invalid names/layouts/countries, multiple candidates including damaged second cards, CNP date/leap/checksum/remainder-10 cases, modern code 70, ambiguity, and official-specimen regressions. Worker-boundary tests exercise the actual bootstrap against external and processing-time transports. Browser tests use synthetic identities only and run actual WASM OCR in Chromium, Firefox, and desktop/mobile WebKit. They cover offline scan/review, absence of processing-time requests, blank storage, canvas/worker cleanup, review and edit gates (including a valid CNP for a different DOB/sex), invalid reads, missing-model retry, page-cache startup recovery, camera capture/stream cleanup/cancellation/refusal, and a phone viewport. Hardware camera quality and real ID-photo accuracy are not yet accepted/benchmarked.
+Unit tests cover both Romanian MRZ encodings, CIS without CNP, all ICAO check-digit failures, invalid names/layouts/countries, multiple candidates including damaged second cards, CNP date/leap/checksum/remainder-10 cases, modern code 70, ambiguity, and official-specimen regressions. Worker-boundary tests exercise the actual bootstrap against external and processing-time transports. Browser tests use synthetic identities only and run actual WASM OCR in Chromium, Firefox, and desktop/mobile WebKit. They cover offline scan/review, absence of processing-time requests, blank storage, canvas/worker cleanup, review and edit gates (including a valid CNP for a different DOB/sex), invalid reads, missing-model retry, page-cache startup recovery, camera capture/stream cleanup/cancellation/refusal, and a phone viewport. PDF tests also cover vector and scanned pages, multipage selection, locked/corrupt/oversized documents, language switching, zero processing requests and PDF-worker/canvas cleanup. Hardware camera quality and real ID-photo accuracy are not yet accepted/benchmarked.
 
 ## GitHub Pages — after acceptance
 
@@ -141,6 +149,6 @@ After publication is accepted, import this repository into Vercel with repositor
 
 ## MVP limits / resuming work
 
-Use sharp, reasonably straight photos with all MRZ rows visible. This version provides rotation/cropping/contrast normalization; it does not automatically find card corners, correct perspective, reconstruct unreadable fields, read the chip/NFC, prove document authenticity, or check a population registry. HEIC, PDF, SVG, passport MRZs, indefinite filler-only expiry, unverified document-number layouts, and CNP century ambiguity are unsupported. File limit: 15 MB and 40 megapixels; processing canvases are bounded.
+Use sharp, reasonably straight photos with all MRZ rows visible. This version provides rotation/cropping/contrast normalization; it does not automatically find card corners, correct perspective, reconstruct unreadable fields, read the chip/NFC, prove document authenticity, or check a population registry. HEIC, password-protected PDFs, SVG, passport MRZs, indefinite filler-only expiry, unverified document-number layouts, and CNP century ambiguity are unsupported. File limit: 15 MB and 40 megapixels; processing canvases are bounded.
 
 See `RUNBOOK.md` for development/release steps, `decisions.jsonl` for choices and authority, and `docs/DESIGN.md` for the UI reference. Preserve the acceptance gate and never commit real identity images, OCR logs, or personal-data screenshots. Third-party notices are in `THIRD_PARTY_NOTICES.md` and the vendored asset/license files.

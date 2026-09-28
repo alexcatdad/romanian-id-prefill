@@ -9,3 +9,6 @@ public/ocr/worker.min.js
 public/ocr/LICENSE.tesseract.txt
 public/ocr/LICENSE.core.txt
 public/licenses/
+public/pdf/pdf.worker.mjs
+public/pdf/resources.json
+public/pdf/wasm/

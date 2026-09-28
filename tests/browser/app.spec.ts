@@ -159,7 +159,7 @@ test('discarding a rotated preview clears all image canvases and prepares anothe
 test('unsupported files never reach OCR or leave a selected file reference', async ({ page }) => {
   await ready(page);
   await page.locator('input[type=file]').setInputFiles({ name: 'synthetic.svg', mimeType: 'image/svg+xml', buffer: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"/>') });
-  await expect(page.getByRole('alert')).toContainText('HEIC, SVG and PDF files are not supported');
+  await expect(page.getByRole('alert')).toContainText('HEIC and SVG files are not supported');
   await expect(page.locator('input[type=file]')).toHaveValue('');
   await expect(page.locator('#cnp')).toHaveValue('');
 });
@@ -168,7 +168,7 @@ test('missing local model shows a recoverable startup error', async ({ page }) =
   await page.route('**/mrz.traineddata.gz', (route) => route.fulfill({ status: 404, body: 'Not found' }));
   await page.goto('./');
   await expect(page.getByRole('alert')).toContainText('local reader could not start');
-  await expect(page.getByRole('button', { name: 'Choose image', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Choose file', exact: true })).toBeDisabled();
   await expect(page.getByRole('button', { name: 'Retry local reader', exact: true })).toBeVisible();
   await page.unroute('**/mrz.traineddata.gz');
   await page.getByRole('button', { name: 'Retry local reader', exact: true }).click();
@@ -194,7 +194,7 @@ test('returning from page cache during model loading retires that reader and rec
   release?.();
   await expect(page.getByText('Local reader ready', { exact: true })).toBeVisible();
   await expect(page.locator('#cnp')).toHaveValue('');
-  await expect(page.getByRole('button', { name: 'Choose image', exact: true })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Choose file', exact: true })).toBeEnabled();
 });
 
 test('camera refusal gives an image fallback and no active video', async ({ page }) => {
@@ -206,7 +206,7 @@ test('camera refusal gives an image fallback and no active video', async ({ page
   await expect(page.getByRole('alert')).toContainText('Camera permission was not granted');
   await page.getByRole('button', { name: 'Choose an image instead', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Choose image', exact: true })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Choose file', exact: true })).toBeEnabled();
 });
 
 test('a late camera permission result is immediately stopped after cancel', async ({ page }) => {

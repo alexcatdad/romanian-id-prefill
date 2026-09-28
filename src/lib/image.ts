@@ -126,7 +126,7 @@ export async function decodeImage(file: File): Promise<HTMLCanvasElement> {
   const bytes = new Uint8Array(await file.slice(0, 1024 * 1024).arrayBuffer());
   const type = imageType(bytes);
   if (!type) {
-    throw new Error('Use a JPEG, PNG or WebP image. HEIC, SVG and PDF files are not supported.');
+    throw new Error('Use a JPEG, PNG, WebP or PDF file. HEIC and SVG files are not supported.');
   }
   const dimensions = headerDimensions(bytes, type);
   if (dimensions) checkDimensions(...dimensions);

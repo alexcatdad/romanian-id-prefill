@@ -64,6 +64,12 @@ The user explicitly approved GitHub Pages publication. Accepted/deployed app com
 
 Post-deployment smoke checks passed in Chromium and WebKit against the public HTTPS site: same-origin assets, HTML CSP, actual synthetic MRZ OCR offline, mandatory review, English-to-Romanian switching, zero processing-time HTTP requests, empty browser storage, and clearing/reinitializing the reader. Physical Safari camera acceptance remains pending. The following documentation/audit commit does not change or redeploy the app.
 
+## PDF changes and verification
+
+Use the pinned `pdfjs-dist` version from the lockfile. `npm run assets` copies its legacy worker/decoder modules and packs CMaps, fonts and WASM into `public/pdf/resources.json`; generated assets are ignored, while the network-blocking bootstrap is tracked. Retain the package and asset licenses. The preview server must serve `.mjs` as JavaScript; both deployment targets must load these same-origin modules before file selection.
+
+After changes run `npm run verify` for root and Pages-subpath builds. PDF browser tests generate synthetic documents only. Check multipage navigation, scanned/vector rendering, selection into the crop flow, English/Romanian controls, corrupt/password/page-count/file-size errors, zero processing requests and cleanup on select/discard/pagehide. Do not weaken validation to accommodate OCR failure on a PDF font. Recheck resource-factory and worker compatibility on PDF.js upgrades; never restore fetching during document processing.
+
 ## Resume
 
 Read `decisions.jsonl`, then `README.md` and this runbook. Keep source images and OCR text out of logs and persistent storage. A production server must retain the supplied content-security and privacy headers.

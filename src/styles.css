@@ -244,3 +244,8 @@ progress::-moz-progress-bar { background: var(--accent); border-radius: 4px; }
   .language-switch button { padding: 6px 8px; }
   .review-fields label { flex-wrap: wrap; gap: 4px; }
 }
+
+.pdf-page-preview { display: block; width: 100%; max-height: 480px; object-fit: contain; background: #eceef6; border: 1px solid var(--line); border-radius: 8px; margin: 16px 0; }
+.pdf-page-preview[hidden] { display: none; }
+.pdf-page-count { margin-top: 18px; color: var(--muted); font-weight: 700; }
+.pdf-page-navigation { display: flex; gap: 12px; flex-wrap: wrap; margin: 16px 0; }

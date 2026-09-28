@@ -12,9 +12,12 @@ import { ValidationSummary } from './components/ValidationSummary';
 import { LocalMrzReader } from './lib/ocr';
 import type { ScanResult } from './lib/ocr';
 import { clearCanvas, decodeImage, prepareMrzCanvas } from './lib/image';
+import { LocalPdfReader } from './lib/pdf';
+import { pdfErrorMessage } from './lib/pdf-message';
+import { PdfPagePicker } from './components/PdfPagePicker';
 import { createSyntheticMrz } from '../tests/fixtures';
 
-type Phase = 'empty' | 'decoding' | 'preview' | 'reading' | 'review' | 'confirmed';
+type Phase = 'empty' | 'pdf' | 'decoding' | 'preview' | 'reading' | 'review' | 'confirmed';
 type ReaderState = 'preparing' | 'ready' | 'error' | 'stopped';
 
 function AppContent() {
@@ -32,6 +35,8 @@ function AppContent() {
   const crop = useRef<HTMLCanvasElement | null>(null);
   const working = useRef<HTMLCanvasElement | null>(null);
   const reader = useRef<LocalMrzReader | null>(null);
+  const pdfReader = useRef<LocalPdfReader | null>(null);
+  const [pdfPages, setPdfPages] = useState(0);
   const generation = useRef(0);
   const decoding = useRef(false);
   const reviewRef = useRef<HTMLElement>(null);
@@ -50,6 +55,7 @@ function AppContent() {
       // used by the result screen must not trigger a processing-time request.
       await Promise.all([
         reader.current?.prepare(),
+        pdfReader.current?.prepare(),
         // Load each Unicode subset explicitly: WebKit can skip subsets when
         // FontFaceSet.load is given a sample containing mixed ranges.
         ...Array.from(document.fonts, (face) => face.load()),
@@ -65,6 +71,8 @@ function AppContent() {
   useEffect(() => {
     const localReader = new LocalMrzReader((value) => { if (value.stage === 'reading') setProgress(value.progress); });
     reader.current = localReader;
+    const localPdfReader = new LocalPdfReader();
+    pdfReader.current = localPdfReader;
     void prepareReader();
     let retirement: Promise<void> = Promise.resolve();
     const forget = () => {
@@ -76,13 +84,13 @@ function AppContent() {
       setConfirmed(null);
       setPhase('empty');
       setReaderState('stopped');
-      retirement = localReader.dispose();
+      retirement = Promise.all([localReader.dispose(), localPdfReader.dispose()]).then(() => {});
     };
     const onPageHide = () => flushSync(forget);
     const onPageShow = (event: PageTransitionEvent) => { if (event.persisted) void retirement.then(prepareReader); };
     window.addEventListener('pagehide', onPageHide);
     window.addEventListener('pageshow', onPageShow);
-    return () => { generation.current += 1; clearImages(); void localReader.dispose(); window.removeEventListener('pagehide', onPageHide); window.removeEventListener('pageshow', onPageShow); };
+    return () => { generation.current += 1; clearImages(); void localReader.dispose(); void localPdfReader.dispose(); window.removeEventListener('pagehide', onPageHide); window.removeEventListener('pageshow', onPageShow); };
   }, [clearImages, prepareReader]);
 
   const reset = () => {
@@ -90,12 +98,17 @@ function AppContent() {
     decoding.current = false;
     clearImages();
     setScan(null); setConfirmed(null); setCameraOpen(false); setError(null); setPhase('empty');
-    void reader.current?.dispose().then(prepareReader);
+    setReaderState('preparing');
+    void Promise.all([reader.current?.dispose(), pdfReader.current?.dispose()]).then(prepareReader);
   };
 
-  const acceptCanvas = (canvas: HTMLCanvasElement) => {
+  const acceptCanvas = async (canvas: HTMLCanvasElement) => {
+    const currentGeneration = generation.current;
     clearImages();
     source.current = canvas;
+    setPhase('decoding');
+    await pdfReader.current?.dispose();
+    if (generation.current !== currentGeneration) { clearCanvas(canvas); return; }
     setImage(canvas); setError(null); setPhase('preview');
   };
 
@@ -104,14 +117,27 @@ function AppContent() {
     decoding.current = true;
     const currentGeneration = generation.current;
     setPhase('decoding'); setError(null);
+    let isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
     try {
+      if (!isPdf) isPdf = new TextDecoder().decode(await file.slice(0, 5).arrayBuffer()) === '%PDF-';
+      if (generation.current !== currentGeneration) return;
+      if (isPdf) {
+        const pages = await pdfReader.current!.open(file);
+        if (generation.current !== currentGeneration) return;
+        setPdfPages(pages); setPhase('pdf');
+        return;
+      }
       const canvas = await decodeImage(file);
       if (generation.current !== currentGeneration) { clearCanvas(canvas); return; }
-      acceptCanvas(canvas);
+      await acceptCanvas(canvas);
     } catch (failure) {
       if (generation.current !== currentGeneration) return;
       clearImages(); setPhase('empty');
-      setError(readableError(failure, 'This image could not be opened. Choose a JPG, PNG, or WebP photo.'));
+      if (isPdf) {
+        await pdfReader.current?.dispose();
+        if (generation.current !== currentGeneration) return;
+        setReaderState('error'); setError(pdfErrorMessage(failure));
+      } else setError(readableError(failure, 'This image could not be opened. Choose a JPG, PNG, or WebP photo.'));
     } finally { if (generation.current === currentGeneration) decoding.current = false; }
   };
 
@@ -160,7 +186,8 @@ function AppContent() {
       <div className="workspace">
         <section className="panel upload-panel" aria-label={t("Add and read your image")}>
           {phase === 'empty' ? <UploadPanel ready={readerState === 'ready'} preparing={readerState === 'preparing'} error={message(error)} onFile={chooseFile} onCamera={() => setCameraOpen(true)} onDemo={demo} onRetry={prepareReader} /> : null}
-          {phase === 'decoding' || phase === 'reading' ? <div className="processing-state" role="status"><Icon name="scan" className="drop-symbol pulse" /><h2>{phase === 'decoding' ? t("Opening your image") : t("Reading on your device")}</h2><p>{phase === 'decoding' ? t("Preparing a temporary image in browser memory.") : t("Only the selected MRZ is being read.")}</p>{phase === 'reading' ? <progress max={1} value={progress} aria-label={t("Local OCR progress")} /> : null}<button className="button button-secondary" onClick={reset}>{t("Cancel and clear")}</button></div> : null}
+          {phase === 'decoding' || phase === 'reading' ? <div className="processing-state" role="status"><Icon name="scan" className="drop-symbol pulse" /><h2>{phase === 'decoding' ? t("Opening your file") : t("Reading on your device")}</h2><p>{phase === 'decoding' ? t("Preparing a temporary image in browser memory.") : t("Only the selected MRZ is being read.")}</p>{phase === 'reading' ? <progress max={1} value={progress} aria-label={t("Local OCR progress")} /> : null}<button className="button button-secondary" onClick={reset}>{t("Cancel and clear")}</button></div> : null}
+          {phase === 'pdf' && pdfReader.current ? <PdfPagePicker reader={pdfReader.current} pageCount={pdfPages} onSelect={(canvas) => { void acceptCanvas(canvas); }} onCancel={reset} /> : null}
           {phase === 'preview' && image ? <ImageEditor image={image} onRead={read} onCancel={reset} /> : null}
           {phase === 'review' || phase === 'confirmed' ? <div className="scan-result"><div className="result-heading"><span className="result-symbol"><Icon name="shield" /></span><div><h2>{t("Image discarded")}</h2><p className="panel-description">{t("Your image and reading buffers have been cleared.")}</p></div></div>{scan ? <ValidationSummary scan={scan} /> : <div className="notice warning" role="alert"><Icon name="alert" /><p>{message(error)}</p></div>}<button className="button button-secondary" onClick={reset}>{t("Read another image")}</button></div> : null}
         </section>
