@@ -1,0 +1,218 @@
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+
+export const romanian = {
+  "The local reader could not initialize.": "Cititorul local nu a putut fi inițializat.",
+  "Reading cancelled.": "Citire anulată.",
+  "This image could not be decoded.": "Imaginea nu a putut fi decodată.",
+  "Local ID home": "Local ID — pagina principală",
+  "Only on this device": "Doar pe acest dispozitiv",
+  "Your details. Your device.": "Datele tale. Dispozitivul tău.",
+  "Read your Romanian ID and prefill a form, without uploading it.": "Citește cartea de identitate și completează un formular, fără să o încarci pe un server.",
+  "Prefill steps": "Pașii completării",
+  "Add your ID": "Adaugă actul",
+  "Read locally": "Citește local",
+  "Review details": "Verifică datele",
+  "Add and read your image": "Adaugă și citește imaginea",
+  "Opening your image": "Se deschide imaginea",
+  "Reading on your device": "Se citește pe dispozitivul tău",
+  "Preparing a temporary image in browser memory.": "Se pregătește o imagine temporară în memoria browserului.",
+  "Only the selected MRZ is being read.": "Se citește doar zona MRZ selectată.",
+  "Local OCR progress": "Progresul citirii OCR locale",
+  "Cancel and clear": "Anulează și șterge",
+  "Image discarded": "Imagine ștearsă",
+  "Your image and reading buffers have been cleared.": "Imaginea și datele temporare de citire au fost șterse.",
+  "Read another image": "Citește altă imagine",
+  "Review and confirm details": "Verifică și confirmă datele",
+  "Ready to prefill": "Gata de completare",
+  "You confirmed these details on this device.": "Ai confirmat aceste date pe acest dispozitiv.",
+  "Full name": "Nume complet",
+  "The example form is filled. Nothing was submitted.": "Formularul demonstrativ este completat. Nu s-a trimis nimic.",
+  "Clear details": "Șterge datele",
+  "The image is discarded after reading. Nothing is saved.": "Imaginea este ștearsă după citire. Nu se salvează nimic.",
+  "How privacy works": "Cum sunt protejate datele",
+  "Add your identity card": "Adaugă cartea de identitate",
+  "Front of older cards, back of newer cards. Keep the MRZ visible.": "Fața actelor vechi, verso-ul celor noi. Păstrează zona MRZ vizibilă.",
+  "Drop an image here": "Trage o imagine aici",
+  "JPG, PNG or WebP · up to 15 MB": "JPG, PNG sau WebP · maximum 15 MB",
+  "Choose image": "Alege imaginea",
+  "Use camera": "Folosește camera",
+  "or choose a clear photo of just the MRZ": "sau alege o fotografie clară doar cu zona MRZ",
+  "Choose ID image": "Alege imaginea actului",
+  "Try a synthetic example": "Încearcă un exemplu fictiv",
+  "Local reader ready": "Cititorul local este pregătit",
+  "Preparing the local reader…": "Se pregătește cititorul local…",
+  "Local reader unavailable": "Cititorul local nu este disponibil",
+  "Retry local reader": "Reîncearcă pornirea cititorului",
+  "Select the machine-readable zone": "Selectează zona de citire optică",
+  "Select the MRZ": "Selectează zona MRZ",
+  "Your identity card with the selected MRZ area highlighted": "Cartea de identitate cu zona MRZ selectată evidențiată",
+  "Rotate left 90°": "Rotește la stânga 90°",
+  "Rotate right 90°": "Rotește la dreapta 90°",
+  "Reset crop": "Resetează selecția",
+  "Use whole image": "Folosește toată imaginea",
+  "Top edge": "Marginea de sus",
+  "Bottom edge": "Marginea de jos",
+  "Discard image": "Șterge imaginea",
+  "Preparing selection…": "Se pregătește selecția…",
+  "Read selected MRZ": "Citește zona MRZ selectată",
+  "Close privacy information": "Închide informațiile despre confidențialitate",
+  "The reader, model, and fonts load from this website before you choose an image. Your ID image, cropped image, and OCR result stay in browser memory.": "Cititorul, modelul și fonturile se încarcă de pe acest site înainte de alegerea imaginii. Imaginea actului, decupajul și rezultatul OCR rămân în memoria browserului.",
+  "Reading makes no network requests. There is no upload endpoint, analytics, account, or saved history. The OCR worker is terminated and image canvases are cleared after each reading, including failed readings.": "Citirea nu face cereri de rețea. Nu există încărcare pe server, analiză de utilizare, cont sau istoric salvat. Procesul OCR este oprit și imaginile temporare sunt șterse după fiecare citire, inclusiv după erori.",
+  "Your editable fields stay only in this tab until you clear them or leave. The app never writes them to browser storage, your clipboard, a download, or a server.": "Câmpurile editabile rămân doar în această filă până le ștergi sau părăsești pagina. Aplicația nu le scrie în stocarea browserului, în clipboard, într-un fișier descărcat sau pe un server.",
+  "The hosting provider (GitHub Pages or Vercel) may log normal website visits, including IP addresses. Browser extensions, your operating system, and a compromised device are outside this app’s control. Clearing references is not a promise of forensic memory erasure.": "Furnizorul de găzduire (GitHub Pages sau Vercel) poate înregistra vizitele obișnuite, inclusiv adresele IP. Extensiile browserului, sistemul de operare și un dispozitiv compromis nu sunt sub controlul aplicației. Ștergerea referințelor nu garantează eliminarea tuturor urmelor din memorie.",
+  "Got it": "Am înțeles",
+  "Review your details": "Verifică datele tale",
+  "Compare every character with your physical card.": "Compară fiecare caracter cu actul fizic.",
+  "The MRZ could not be validated. Try another photo.": "Zona MRZ nu a putut fi validată. Încearcă altă fotografie.",
+  "Your fields will appear here after reading.": "Datele vor apărea aici după citire.",
+  "Edited by you": "Modificat de tine",
+  "Appears after reading": "Apare după citire",
+  "Names have no MRZ checksum. Restore missing accents or a shortened name from your card.": "Numele nu are cifră de control în MRZ. Adaugă diacriticele sau completează numele scurtat conform actului.",
+  "Checksum, date & MRZ agree": "Cifra de control, data și MRZ corespund",
+  "Needs correction": "Necesită corectare",
+  "13-digit personal code": "Cod numeric personal de 13 cifre",
+  "The CNP does not agree with the MRZ birth date or sex. Compare it with your card.": "CNP-ul nu corespunde datei nașterii sau sexului din MRZ. Compară-l cu actul.",
+  "Always compare these details with your card.": "Compară întotdeauna aceste date cu actul.",
+  "I have checked the name and CNP": "Am verificat numele și CNP-ul",
+  "Use these details": "Folosește aceste date",
+  "Your edits need a fresh review. CNP validation checks your edited value.": "Modificările necesită o nouă verificare. Validarea CNP verifică valoarea modificată.",
+  "Take a photo": "Fă o fotografie",
+  "Close camera": "Închide camera",
+  "Keep the card flat and well lit. Capture an image, then select its MRZ.": "Ține actul drept și bine luminat. Fă o fotografie, apoi selectează zona MRZ.",
+  "Live camera preview": "Imagine în direct de la cameră",
+  "Waiting for camera access…": "Se așteaptă accesul la cameră…",
+  "Choose an image instead": "Alege o imagine în schimb",
+  "Try camera again": "Reîncearcă pornirea camerei",
+  "Capture image": "Fotografiază",
+  "OCR confidence": "Scor de încredere OCR",
+  "Unavailable": "Indisponibil",
+  "An OCR estimate, not a probability that your details are correct.": "O estimare OCR, nu probabilitatea ca datele să fie corecte.",
+  "Low confidence. Retake the photo or compare every character carefully.": "Încredere scăzută. Refă fotografia sau compară atent fiecare caracter.",
+  "Original reading validation": "Validarea citirii inițiale",
+  "MRZ checks": "Verificări MRZ",
+  "Passed": "Valid",
+  "Failed": "Invalid",
+  "CNP validation": "Validare CNP",
+  "Needs review": "Necesită verificare",
+  "View all validation checks": "Vezi toate verificările",
+  "These checks describe the original reading. Edited details are checked in the review form.": "Aceste verificări descriu citirea inițială. Datele modificate sunt verificate în formular.",
+  "Validation results": "Rezultatele validării",
+  "Review": "Verifică",
+  "Enter exactly 13 digits, without spaces or other characters.": "Introdu exact 13 cifre, fără spații sau alte caractere.",
+  "The first CNP digit is not a supported sex/century code.": "Prima cifră a CNP-ului nu este un cod de sex/secol acceptat.",
+  "The encoded birth date is invalid or in the future.": "Data nașterii codificată este invalidă sau în viitor.",
+  "The CNP allocation code is not recognised.": "Codul de alocare al CNP-ului nu este recunoscut.",
+  "The CNP serial must be between 001 and 999.": "Numărul de ordine al CNP-ului trebuie să fie între 001 și 999.",
+  "The CNP checksum does not match.": "Cifra de control a CNP-ului nu corespunde.",
+  "This CNP code does not encode a birth century; the full birth date cannot be validated without another source.": "Acest cod CNP nu indică secolul nașterii; data completă nu poate fi validată fără altă sursă.",
+  "MRZ structure": "Structură MRZ",
+  "The MRZ contains unsupported characters. Retake the photo; no characters were substituted.": "Zona MRZ conține caractere neacceptate. Refă fotografia; nu au fost înlocuite caractere.",
+  "Three lines of 30 characters.": "Trei rânduri de câte 30 de caractere.",
+  "Two lines of 36 characters.": "Două rânduri de câte 36 de caractere.",
+  "Supported identity-card type": "Tip de act de identitate acceptat",
+  "This MVP supports the verified ID card layouts.": "Această versiune acceptă formatele verificate de carte de identitate.",
+  "Romanian issuer": "Emitent român",
+  "Romanian nationality": "Cetățenie română",
+  "Document-number layout": "Formatul numărului documentului",
+  "Encoded birth date": "Data nașterii codificată",
+  "Encoded expiry date": "Data expirării codificată",
+  "Calendar structure only; current document validity is not checked.": "Se verifică doar structura calendaristică, nu valabilitatea curentă a documentului.",
+  "This document type is not a supported Romanian identity card.": "Acest tip de document nu este o carte de identitate românească acceptată.",
+  "Both issuer and nationality must be ROU.": "Emitentul și cetățenia trebuie să fie ROU.",
+  "The document number uses an unsupported layout.": "Numărul documentului are un format neacceptat.",
+  "The MRZ name field is incomplete or malformed.": "Câmpul numelui din MRZ este incomplet sau incorect formatat.",
+  "The MRZ birth date is incomplete or is not a calendar date.": "Data nașterii din MRZ este incompletă sau nu este o dată calendaristică.",
+  "The MRZ expiry date is incomplete or is not a calendar date.": "Data expirării din MRZ este incompletă sau nu este o dată calendaristică.",
+  "The MRZ could not be parsed. Retake the photo.": "Zona MRZ nu a putut fi interpretată. Refă fotografia.",
+  "One or more MRZ fields have invalid syntax.": "Unul sau mai multe câmpuri MRZ au o structură invalidă.",
+  "The full supported Romanian MRZ structure was not validated.": "Structura completă a formatului MRZ românesc acceptat nu a fost validată.",
+  "MRZ names are not covered by check digits and omit diacritics. Compare the complete name with your card.": "Numele din MRZ nu este verificat prin cifre de control și nu conține diacritice. Compară numele complet cu actul.",
+  "Name confidence": "Încredere în citirea numelui",
+  "An OCR reading needs your review; check digits do not validate the name.": "Citirea OCR trebuie verificată de tine; cifrele de control nu validează numele.",
+  "The name fills the MRZ field and may be truncated. Enter the complete name from your card.": "Numele ocupă întregul câmp MRZ și poate fi scurtat. Introdu numele complet din act.",
+  "CNP encoding": "Codificare CNP",
+  "The optional MRZ data does not contain a CNP in a supported encoding. Enter the CNP from your card.": "Datele opționale MRZ nu conțin un CNP într-o codificare acceptată. Introdu CNP-ul din act.",
+  "CNP length": "Lungime CNP",
+  "CNP sex/century code": "Cod de sex/secol CNP",
+  "CNP birth date": "Data nașterii din CNP",
+  "CNP allocation code": "Cod de alocare CNP",
+  "CNP serial": "Număr de ordine CNP",
+  "CNP checksum": "Cifră de control CNP",
+  "The CNP does not encode a century.": "CNP-ul nu indică secolul.",
+  "CNP / MRZ birth-date agreement": "Concordanța datei nașterii CNP / MRZ",
+  "The CNP birth date differs from the MRZ birth date.": "Data nașterii din CNP diferă de cea din MRZ.",
+  "CNP / MRZ sex agreement": "Concordanța sexului CNP / MRZ",
+  "CNP / MRZ sex agreement cannot be verified.": "Concordanța sexului CNP / MRZ nu poate fi verificată.",
+  "The CNP sex code differs from the MRZ sex field.": "Codul de sex din CNP diferă de câmpul sex din MRZ.",
+  "More than one different complete MRZ was found. Process one card at a time.": "Au fost găsite mai multe zone MRZ complete diferite. Procesează câte un act pe rând.",
+  "No complete supported MRZ could be read. Keep all MRZ lines visible and retake the photo.": "Nu s-a putut citi o zonă MRZ completă acceptată. Păstrează toate rândurile MRZ vizibile și refă fotografia.",
+  "Document number check digit": "Cifra de control a numărului documentului",
+  "Birth date check digit": "Cifra de control a datei nașterii",
+  "Expiration date check digit": "Cifra de control a datei expirării",
+  "Composite check digit": "Cifra de control compusă",
+  "The local reader could not start. Reload this page.": "Cititorul local nu a pornit. Reîncarcă pagina.",
+  "This image could not be opened. Choose a JPG, PNG, or WebP photo.": "Imaginea nu a putut fi deschisă. Alege o fotografie JPG, PNG sau WebP.",
+  "The MRZ could not be read. Try a clearer photo.": "Zona MRZ nu a putut fi citită. Încearcă o fotografie mai clară.",
+  "This browser could not rotate the image.": "Browserul nu a putut roti imaginea.",
+  "We could not prepare that selection. Choose another image and try again.": "Selecția nu a putut fi pregătită. Alege altă imagine și încearcă din nou.",
+  "Camera permission was not granted. Allow camera access in your browser, then try again, or choose an image from your device.": "Accesul la cameră nu a fost permis. Permite accesul în browser și reîncearcă sau alege o imagine de pe dispozitiv.",
+  "No camera was found. Choose an image from your device instead.": "Nu a fost găsită nicio cameră. Alege o imagine de pe dispozitiv.",
+  "The camera is unavailable or in use by another app. Close that app and try again, or choose an image from your device.": "Camera nu este disponibilă sau este folosită de altă aplicație. Închide aplicația și reîncearcă sau alege o imagine de pe dispozitiv.",
+  "We could not start the camera. Try again, or choose an image from your device.": "Camera nu a putut fi pornită. Reîncearcă sau alege o imagine de pe dispozitiv.",
+  "Camera access needs HTTPS or localhost. Choose an image from your device instead.": "Accesul la cameră necesită HTTPS sau localhost. Alege o imagine de pe dispozitiv.",
+  "This browser does not provide camera access. Choose an image from your device instead.": "Browserul nu oferă acces la cameră. Alege o imagine de pe dispozitiv.",
+  "Return to this page, then start the camera again.": "Revino la această pagină, apoi pornește din nou camera.",
+  "Camera access ended. Start it again, or choose an image from your device.": "Accesul la cameră s-a încheiat. Pornește-o din nou sau alege o imagine de pe dispozitiv.",
+  "The camera stopped when this page was hidden. Start it again to continue.": "Camera s-a oprit când pagina a fost ascunsă. Pornește-o din nou pentru a continua.",
+  "We could not capture this image. Try again, or choose an image from your device.": "Imaginea nu a putut fi fotografiată. Reîncearcă sau alege o imagine de pe dispozitiv.",
+  "The local reader could not start. Reload this page and check that its local OCR assets are available.": "Cititorul local nu a pornit. Reîncarcă pagina și verifică dacă resursele OCR locale sunt disponibile.",
+  "Wait for the local reader before choosing an image.": "Așteaptă pregătirea cititorului local înainte de alegerea imaginii.",
+  "Country fields were separately re-read with letter-only OCR. Numeric fields and check digits were not altered.": "Câmpurile de țară au fost recitite separat cu OCR doar pentru litere. Câmpurile numerice și cifrele de control nu au fost modificate.",
+  "The MRZ could not be read. Try a sharper, straight photo with every MRZ line in the selection.": "Zona MRZ nu a putut fi citită. Încearcă o fotografie mai clară și dreaptă, cu toate rândurile MRZ selectate.",
+  "This image has invalid dimensions. Choose another image.": "Imaginea are dimensiuni invalide. Alege altă imagine.",
+  "This image is larger than 40 megapixels. Choose a smaller JPEG, PNG or WebP image.": "Imaginea depășește 40 de megapixeli. Alege o imagine JPEG, PNG sau WebP mai mică.",
+  "This browser could not prepare the image.": "Browserul nu a putut pregăti imaginea.",
+  "This file is empty. Choose an image of your identity card.": "Fișierul este gol. Alege o imagine a cărții de identitate.",
+  "Choose an image smaller than 15 MB.": "Alege o imagine mai mică de 15 MB.",
+  "Use a JPEG, PNG or WebP image. HEIC, SVG and PDF files are not supported.": "Folosește o imagine JPEG, PNG sau WebP. Fișierele HEIC, SVG și PDF nu sunt acceptate.",
+  "This browser could not prepare the MRZ image.": "Browserul nu a putut pregăti imaginea MRZ.",
+  "Select every row of letters, numbers and < in the MRZ. Drag its edges or use the controls below.": "Selectează toate rândurile de litere, cifre și < din MRZ. Trage marginile sau folosește comenzile de mai jos.",
+  "percent from the top of the image": "la sută de la marginea de sus a imaginii"
+} as const;
+export type Message = keyof typeof romanian;
+export type Language = 'en' | 'ro';
+export function initialLanguage(languages: readonly string[]): Language {
+  return languages[0]?.toLowerCase().split('-')[0] === 'ro' ? 'ro' : 'en';
+}
+export function translate(message: string, language: Language): string {
+  if (language === 'en') return message;
+  if (Object.hasOwn(romanian, message)) return romanian[message as Message];
+  const check = message.match(/^(Document number|Birth date|Expiration date|Composite) check digit does not match\. Retake the photo\.$/);
+  if (check) return translate(check[1] + ' check digit', language) + ' nu corespunde. Refă fotografia.';
+  if (message === 'A complete TD1 MRZ requires three lines of 30 characters.') return 'O zonă MRZ TD1 completă necesită trei rânduri de câte 30 de caractere.';
+  if (message === 'A complete TD2 MRZ requires two lines of 36 characters.') return 'O zonă MRZ TD2 completă necesită două rânduri de câte 36 de caractere.';
+  return message;
+}
+const LanguageContext = createContext<{ language: Language; setLanguage: (language: Language) => void } | null>(null);
+export function LanguageProvider({ children }: { children: ReactNode }) {
+  const [language, setLanguage] = useState<Language>(() => initialLanguage(navigator.languages.length ? navigator.languages : [navigator.language]));
+  useEffect(() => { document.documentElement.lang = language; document.title = language === 'ro' ? 'Local ID — Completare din cartea de identitate' : 'Local ID — Romanian identity-card prefill'; }, [language]);
+  return <LanguageContext.Provider value={{ language, setLanguage }}>{children}</LanguageContext.Provider>;
+}
+export function useLanguage() {
+  const context = useContext(LanguageContext);
+  if (!context) throw new Error('LanguageProvider is missing');
+  return { ...context, t: (message: Message) => translate(message, context.language), message: (value: string | null) => value ? translate(value, context.language) : '' };
+}
+export function LanguageSwitch() {
+  const { language, setLanguage } = useLanguage();
+  return <div className="language-switch" role="group" aria-label={language === 'ro' ? 'Limba interfeței' : 'Interface language'}>
+    <button type="button" lang="en" aria-pressed={language === 'en'} onClick={() => setLanguage('en')}>English</button>
+    <button type="button" lang="ro" aria-pressed={language === 'ro'} onClick={() => setLanguage('ro')}>Română</button>
+  </div>;
+}
+
+/** Browser-native error text is variable and may expose implementation details. */
+export function readableError(error: unknown, fallback: Message): Message {
+  return error instanceof Error && Object.hasOwn(romanian, error.message) ? error.message as Message : fallback;
+}

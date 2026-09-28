@@ -2,7 +2,21 @@
 
 A TypeScript browser app that reads a Romanian identity card’s machine-readable zone (MRZ), extracts a name and CNP when available, validates them, and fills a local example form **only after human review**. The source image and OCR processing stay in the browser. There is no backend, upload, account, analytics, or saved history.
 
-[Public repository](https://github.com/alexcatdad/romanian-id-prefill). GitHub Pages is the deployment target. **Publication is manual and awaits the user’s acceptance of this MVP.** Pushing source or passing CI does not deploy a site.
+[Public repository](https://github.com/alexcatdad/romanian-id-prefill). GitHub Pages is the primary deployment target; Vercel is a supported static alternative. **Publication is manual and awaits the user’s acceptance of this MVP.** Pushing source or passing CI does not deploy a site.
+
+## Deployment, browser, and language targets
+
+| Target | Contract |
+| --- | --- |
+| GitHub Pages | Static `dist/` at `/romanian-id-prefill/`; local assets use the configured base path |
+| Vercel | The same static app at `/`; `vercel.json` sets Vite, `npm run build`, `dist/`, and restrictive response headers; no Functions or server |
+| Primary browser | Safari 18+ on macOS and Safari on iOS/iPadOS 18+; release acceptance checks the current stable Safari on a Mac and an iPhone/iPad |
+| Other browsers | Current stable Chrome, Edge, and Firefox; Chromium and Firefox automation provide engine coverage |
+| Languages | English and Romanian interface, including instructions, validation, errors, and accessibility labels; MRZ recognition stays ICAO Latin letters/digits/`<` |
+
+Safari is the compatibility priority. The JavaScript build explicitly targets Safari/iOS 18 and modern Chromium/Firefox. [Vite documents browser-specific build targets](https://vite.dev/guide/build); [Safari 18 is a published stable baseline](https://developer.apple.com/documentation/safari-release-notes/safari-18-release-notes). Transpilation cannot supply missing browser APIs. Automated desktop/mobile WebKit tests are a regression proxy, **not certification of shipping Safari or a physical camera**: [Playwright uses its own WebKit build](https://playwright.dev/docs/browsers#webkit). See the physical Safari acceptance checklist in `RUNBOOK.md`.
+
+Use the **English / Română** switch in the header. The initial language follows the browser’s primary language (Romanian or English fallback); the selection stays in memory and resets on reload. Switching languages preserves entered details and makes no requests. Romanian UI and editable names support diacritics. MRZ names normally omit them; the reviewer can restore the spelling from the card. English/Romanian UI support does not expand OCR to general document prose.
 
 ## Run
 
@@ -82,7 +96,7 @@ No image, crop, filename, EXIF metadata, OCR text, or result is sent to a server
 
 After the reader is ready and an image has been decoded into the crop preview, OCR and review can finish without an internet connection. Browser file-decoding behavior is a separate limit: WebKit's automated offline mode can refuse local-file reads, so an offline upload from every browser is not promised. Online decoding still makes no HTTP request and keeps the file local. A fresh worker is created for each new scan; a new scan after reset/reload needs asset access again. This is not an installable offline PWA.
 
-Production HTML puts a restrictive CSP before scripts: same-origin scripts/assets, no external connections, no form submissions, no inline scripts or styles, no objects or document-base injection. The supplied local static server adds HTTP CSP, frame restrictions, no-referrer, camera-only permissions, `nosniff`, and no-store headers; it rejects non-GET/HEAD requests. GitHub Pages does not provide arbitrary custom response headers, so the Pages build retains the HTML CSP and worker restrictions, but cannot claim the local server’s header-only frame protection. GitHub may log ordinary site visits/IP addresses; [GitHub documents this](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages). These visits contain no ID/OCR payload.
+Production HTML puts a restrictive CSP before scripts: same-origin scripts/assets, no external connections, no form submissions, no inline scripts or styles, no objects or document-base injection. The supplied local static server adds HTTP CSP, frame restrictions, no-referrer, camera-only permissions, `nosniff`, and no-store headers; it rejects non-GET/HEAD requests. GitHub Pages does not provide arbitrary custom response headers, so the Pages build retains the HTML CSP and worker restrictions, but cannot claim the local server’s header-only frame protection. Vercel uses the equivalent response headers in `vercel.json`; keep Web Analytics, Speed Insights, Toolbar injection, and third-party integrations disabled. Hosting providers may log ordinary asset requests and IP addresses. GitHub may log ordinary site visits/IP addresses; [GitHub documents this](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages). These visits contain no ID/OCR payload.
 
 Browser extensions, OS/browser memory handling, and a compromised host are outside this application’s guarantee. Clearing canvases/references and terminating the worker is resource cleanup, not guaranteed forensic erasure of all memory copies.
 
@@ -91,15 +105,15 @@ Browser extensions, OS/browser memory handling, and a compromised host are outsi
 ```sh
 npm test
 npm run typecheck
-npx playwright install chromium webkit
+npx playwright install chromium firefox webkit
 npm run verify
 ```
 
-Unit tests cover both Romanian MRZ encodings, CIS without CNP, all ICAO check-digit failures, invalid names/layouts/countries, multiple candidates including damaged second cards, CNP date/leap/checksum/remainder-10 cases, modern code 70, ambiguity, and official-specimen regressions. Worker-boundary tests exercise the actual bootstrap against external and processing-time transports. Browser tests use synthetic identities only and run actual WASM OCR in Chromium and WebKit. They cover offline scan/review, absence of processing-time requests, blank storage, canvas/worker cleanup, review and edit gates (including a valid CNP for a different DOB/sex), invalid reads, missing-model retry, page-cache startup recovery, camera capture/stream cleanup/cancellation/refusal, and a phone viewport. Hardware camera quality and real ID-photo accuracy are not yet accepted/benchmarked.
+Unit tests cover both Romanian MRZ encodings, CIS without CNP, all ICAO check-digit failures, invalid names/layouts/countries, multiple candidates including damaged second cards, CNP date/leap/checksum/remainder-10 cases, modern code 70, ambiguity, and official-specimen regressions. Worker-boundary tests exercise the actual bootstrap against external and processing-time transports. Browser tests use synthetic identities only and run actual WASM OCR in Chromium, Firefox, and desktop/mobile WebKit. They cover offline scan/review, absence of processing-time requests, blank storage, canvas/worker cleanup, review and edit gates (including a valid CNP for a different DOB/sex), invalid reads, missing-model retry, page-cache startup recovery, camera capture/stream cleanup/cancellation/refusal, and a phone viewport. Hardware camera quality and real ID-photo accuracy are not yet accepted/benchmarked.
 
 ## GitHub Pages — after acceptance
 
-The verification workflow runs on pushes/PRs. `deploy-pages.yml` runs **only manually**, from `main`, with the explicit `accepted=true` input. It re-tests and builds the exact artifact under the repository subpath, then configures and publishes Pages through official GitHub actions. No server or credentials are embedded in the app.
+The verification workflow runs on pushes/PRs and verifies both root hosting and the Pages subpath. `deploy-pages.yml` runs **only manually**, from `main`, with the explicit `accepted=true` input. It re-tests and builds the exact artifact under the repository subpath, then configures and publishes Pages through official GitHub actions. No server or credentials are embedded in the app.
 
 After the user accepts this MVP for publication:
 
@@ -118,6 +132,12 @@ PAGES_BASE_PATH=/romanian-id-prefill/ npm start
 ```
 
 Open `http://127.0.0.1:4173/romanian-id-prefill/`.
+
+## Vercel — after acceptance
+
+[Vercel supports Vite static builds](https://vercel.com/docs/frameworks/frontend/vite) and [configuration/response headers in `vercel.json`](https://vercel.com/docs/project-configuration/vercel-json). No Vercel project is created or deployed by these source changes.
+
+After publication is accepted, import this repository into Vercel with repository root as Root Directory, Node.js 24, install command `npm ci`, build command `npm run build`, output `dist`, and **no `PAGES_BASE_PATH` environment variable**. The checked-in configuration supplies the build/output settings. Do not enable analytics, Speed Insights, Toolbar injection, or external runtime scripts. Keep automatic deployments disabled unless separately authorized; importing a Git project can immediately publish a deployment. Verify the resulting HTTPS site, headers, assets, and Safari checklist before declaring it accepted. The static app has one page and needs no catch-all rewrite.
 
 ## MVP limits / resuming work
 

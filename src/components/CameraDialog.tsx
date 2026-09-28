@@ -1,3 +1,4 @@
+import { useLanguage } from '../i18n';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { clearCanvas } from '../lib/image';
 
@@ -23,6 +24,7 @@ function cameraError(error: unknown): string {
 }
 
 export function CameraDialog({ onCapture, onClose }: CameraDialogProps) {
+  const { t, message } = useLanguage();
   const panelRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -225,17 +227,17 @@ export function CameraDialog({ onCapture, onClose }: CameraDialogProps) {
         tabIndex={-1}
       >
         <div className="camera-dialog-header">
-          <h2 id={titleId}>Take a photo</h2>
-          <button ref={closeButtonRef} className="button button-secondary" type="button" onClick={close}>Close camera</button>
+          <h2 id={titleId}>{t("Take a photo")}</h2>
+          <button ref={closeButtonRef} className="button button-secondary" type="button" onClick={close}>{t("Close camera")}</button>
         </div>
-        <p id={instructionsId}>Keep the card flat and well lit. Capture an image, then select its MRZ.</p>
-        <video ref={videoRef} className="camera-preview" muted playsInline aria-label="Live camera preview" onLoadedMetadata={videoReady} onCanPlay={videoReady} />
-        {state === 'starting' && <p role="status">Waiting for camera access…</p>}
-        {error && <p className="camera-error field-error" role="alert">{error}</p>}
+        <p id={instructionsId}>{t("Keep the card flat and well lit. Capture an image, then select its MRZ.")}</p>
+        <video ref={videoRef} className="camera-preview" muted playsInline aria-label={t("Live camera preview")} onLoadedMetadata={videoReady} onCanPlay={videoReady} />
+        {state === 'starting' && <p role="status">{t("Waiting for camera access…")}</p>}
+        {error && <p className="camera-error field-error" role="alert">{message(error)}</p>}
         <div className="camera-dialog-actions">
-          <button className="button button-secondary" type="button" onClick={close}>Choose an image instead</button>
-          {state === 'error' && canRetry && <button className="button button-secondary" type="button" onClick={() => { void startCamera(); }}>Try camera again</button>}
-          <button className="button button-primary" type="button" disabled={state !== 'ready'} onClick={capture}>Capture image</button>
+          <button className="button button-secondary" type="button" onClick={close}>{t("Choose an image instead")}</button>
+          {state === 'error' && canRetry && <button className="button button-secondary" type="button" onClick={() => { void startCamera(); }}>{t("Try camera again")}</button>}
+          <button className="button button-primary" type="button" disabled={state !== 'ready'} onClick={capture}>{t("Capture image")}</button>
         </div>
       </div>
     </div>

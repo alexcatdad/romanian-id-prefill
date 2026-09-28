@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => ({
         .replace("connect-src 'self'", "connect-src 'self' ws://127.0.0.1:5173");
     },
   }],
-  build: { sourcemap: false, target: 'es2022' },
+  build: { sourcemap: false, target: ['safari18', 'ios18', 'chrome111', 'edge111', 'firefox114'] },
   server: { host: '127.0.0.1', port: 5173, strictPort: true },
   test: { include: ['src/**/*.test.ts', 'tests/**/*.test.ts'] },
   // Development HMR needs its own local socket; the production HTML is stricter.

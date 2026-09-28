@@ -284,7 +284,7 @@ test('privacy information and responsive controls remain usable on a phone viewp
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.getByRole('button', { name: 'How privacy works', exact: true }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
-  await expect(page.getByRole('dialog')).toContainText('GitHub Pages may log normal website visits');
+  await expect(page.getByRole('dialog')).toContainText('The hosting provider (GitHub Pages or Vercel) may log normal website visits');
   await page.getByRole('button', { name: 'Got it', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
 });

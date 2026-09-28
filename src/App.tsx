@@ -1,3 +1,4 @@
+import { useLanguage, LanguageProvider, LanguageSwitch, readableError } from './i18n';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { Icon } from './components/Icon';
@@ -16,7 +17,8 @@ import { createSyntheticMrz } from '../tests/fixtures';
 type Phase = 'empty' | 'decoding' | 'preview' | 'reading' | 'review' | 'confirmed';
 type ReaderState = 'preparing' | 'ready' | 'error' | 'stopped';
 
-export function App() {
+function AppContent() {
+  const { t, message } = useLanguage();
   const [phase, setPhase] = useState<Phase>('empty');
   const [readerState, setReaderState] = useState<ReaderState>('preparing');
   const [progress, setProgress] = useState(0);
@@ -48,14 +50,15 @@ export function App() {
       // used by the result screen must not trigger a processing-time request.
       await Promise.all([
         reader.current?.prepare(),
-        ...[400, 500, 600, 700, 800].map((weight) => document.fonts.load(`${weight} 16px "Manrope"`)),
-        document.fonts.load('400 18px "IBM Plex Mono"'),
+        // Load each Unicode subset explicitly: WebKit can skip subsets when
+        // FontFaceSet.load is given a sample containing mixed ranges.
+        ...Array.from(document.fonts, (face) => face.load()),
       ]);
       if (generation.current === currentGeneration && reader.current?.ready) setReaderState('ready');
     } catch (failure) {
       if (generation.current !== currentGeneration) return;
       setReaderState('error');
-      setError(failure instanceof Error ? failure.message : 'The local reader could not start. Reload this page.');
+      setError(readableError(failure, 'The local reader could not start. Reload this page.'));
     }
   }, []);
 
@@ -108,7 +111,7 @@ export function App() {
     } catch (failure) {
       if (generation.current !== currentGeneration) return;
       clearImages(); setPhase('empty');
-      setError(failure instanceof Error ? failure.message : 'This image could not be opened. Choose a JPG, PNG, or WebP photo.');
+      setError(readableError(failure, 'This image could not be opened. Choose a JPG, PNG, or WebP photo.'));
     } finally { if (generation.current === currentGeneration) decoding.current = false; }
   };
 
@@ -137,7 +140,7 @@ export function App() {
       requestAnimationFrame(() => reviewRef.current?.focus({ preventScroll: true }));
     } catch (failure) {
       if (generation.current !== currentGeneration) return;
-      setError(failure instanceof Error ? failure.message : 'The MRZ could not be read. Try a clearer photo.');
+      setError(readableError(failure, 'The MRZ could not be read. Try a clearer photo.'));
       setPhase('review');
     } finally {
       if (generation.current === currentGeneration) {
@@ -150,24 +153,26 @@ export function App() {
 
   const step = phase === 'confirmed' || phase === 'review' ? 3 : phase === 'reading' ? 2 : 1;
   return <div className="app-shell">
-    <header className="app-header"><a className="wordmark" href={import.meta.env.BASE_URL} aria-label="Local ID home"><Icon name="scan" />Local ID</a><div className="privacy-indicator"><Icon name="shield" /><span>Only on this device</span></div></header>
+    <header className="app-header"><a className="wordmark" href={import.meta.env.BASE_URL} aria-label={t("Local ID home")}><Icon name="scan" />Local ID</a><div className="header-actions"><LanguageSwitch /><div className="privacy-indicator"><Icon name="shield" /><span>{t("Only on this device")}</span></div></div></header>
     <main>
-      <div className="hero"><h1>Your details. Your device.</h1><p>Read your Romanian ID and prefill a form, without uploading it.</p></div>
-      <ol className="steps" aria-label="Prefill steps">{['Add your ID', 'Read locally', 'Review details'].map((label, index) => <li className={step === index + 1 ? 'active' : step > index + 1 ? 'complete' : ''} aria-current={step === index + 1 ? 'step' : undefined} key={label}><span className="step-number">{step > index + 1 ? <Icon name="check" /> : index + 1}</span><span>{label}</span></li>)}</ol>
+      <div className="hero"><h1>{t("Your details. Your device.")}</h1><p>{t("Read your Romanian ID and prefill a form, without uploading it.")}</p></div>
+      <ol className="steps" aria-label={t("Prefill steps")}>{[t("Add your ID"), t("Read locally"), t("Review details")].map((label, index) => <li className={step === index + 1 ? 'active' : step > index + 1 ? 'complete' : ''} aria-current={step === index + 1 ? 'step' : undefined} key={label}><span className="step-number">{step > index + 1 ? <Icon name="check" /> : index + 1}</span><span>{message(label)}</span></li>)}</ol>
       <div className="workspace">
-        <section className="panel upload-panel" aria-label="Add and read your image">
-          {phase === 'empty' ? <UploadPanel ready={readerState === 'ready'} preparing={readerState === 'preparing'} error={error} onFile={chooseFile} onCamera={() => setCameraOpen(true)} onDemo={demo} onRetry={prepareReader} /> : null}
-          {phase === 'decoding' || phase === 'reading' ? <div className="processing-state" role="status"><Icon name="scan" className="drop-symbol pulse" /><h2>{phase === 'decoding' ? 'Opening your image' : 'Reading on your device'}</h2><p>{phase === 'decoding' ? 'Preparing a temporary image in browser memory.' : 'Only the selected MRZ is being read.'}</p>{phase === 'reading' ? <progress max={1} value={progress} aria-label="Local OCR progress" /> : null}<button className="button button-secondary" onClick={reset}>Cancel and clear</button></div> : null}
+        <section className="panel upload-panel" aria-label={t("Add and read your image")}>
+          {phase === 'empty' ? <UploadPanel ready={readerState === 'ready'} preparing={readerState === 'preparing'} error={message(error)} onFile={chooseFile} onCamera={() => setCameraOpen(true)} onDemo={demo} onRetry={prepareReader} /> : null}
+          {phase === 'decoding' || phase === 'reading' ? <div className="processing-state" role="status"><Icon name="scan" className="drop-symbol pulse" /><h2>{phase === 'decoding' ? t("Opening your image") : t("Reading on your device")}</h2><p>{phase === 'decoding' ? t("Preparing a temporary image in browser memory.") : t("Only the selected MRZ is being read.")}</p>{phase === 'reading' ? <progress max={1} value={progress} aria-label={t("Local OCR progress")} /> : null}<button className="button button-secondary" onClick={reset}>{t("Cancel and clear")}</button></div> : null}
           {phase === 'preview' && image ? <ImageEditor image={image} onRead={read} onCancel={reset} /> : null}
-          {phase === 'review' || phase === 'confirmed' ? <div className="scan-result"><div className="result-heading"><span className="result-symbol"><Icon name="shield" /></span><div><h2>Image discarded</h2><p className="panel-description">Your image and reading buffers have been cleared.</p></div></div>{scan ? <ValidationSummary scan={scan} /> : <div className="notice warning" role="alert"><Icon name="alert" /><p>{error}</p></div>}<button className="button button-secondary" onClick={reset}>Read another image</button></div> : null}
+          {phase === 'review' || phase === 'confirmed' ? <div className="scan-result"><div className="result-heading"><span className="result-symbol"><Icon name="shield" /></span><div><h2>{t("Image discarded")}</h2><p className="panel-description">{t("Your image and reading buffers have been cleared.")}</p></div></div>{scan ? <ValidationSummary scan={scan} /> : <div className="notice warning" role="alert"><Icon name="alert" /><p>{message(error)}</p></div>}<button className="button button-secondary" onClick={reset}>{t("Read another image")}</button></div> : null}
         </section>
-        <section className="panel review-panel" tabIndex={-1} ref={reviewRef} aria-label="Review and confirm details">
-          {confirmed ? <div className="confirmed-form"><Icon name="check" className="confirmed-symbol" /><h2>Ready to prefill</h2><p className="panel-description">You confirmed these details on this device.</p><dl><dt>Full name</dt><dd>{confirmed.fullName}</dd><dt>CNP</dt><dd className="mono">{confirmed.cnp}</dd></dl><p className="notice success"><Icon name="check" />The example form is filled. Nothing was submitted.</p><button className="button button-secondary" onClick={reset}>Clear details</button></div> : <ReviewForm key={scan ? 'scan' : 'empty'} scan={scan} onConfirm={(details) => { setConfirmed(details); setPhase('confirmed'); }} />}
+        <section className="panel review-panel" tabIndex={-1} ref={reviewRef} aria-label={t("Review and confirm details")}>
+          {confirmed ? <div className="confirmed-form"><Icon name="check" className="confirmed-symbol" /><h2>{t("Ready to prefill")}</h2><p className="panel-description">{t("You confirmed these details on this device.")}</p><dl><dt>{t("Full name")}</dt><dd>{confirmed.fullName}</dd><dt>CNP</dt><dd className="mono">{confirmed.cnp}</dd></dl><p className="notice success"><Icon name="check" />{t("The example form is filled. Nothing was submitted.")}</p><button className="button button-secondary" onClick={reset}>{t("Clear details")}</button></div> : <ReviewForm key={scan ? 'scan' : 'empty'} scan={scan} onConfirm={(details) => { setConfirmed(details); setPhase('confirmed'); }} />}
         </section>
       </div>
     </main>
-    <footer className="app-footer"><p><Icon name="lock" />The image is discarded after reading. Nothing is saved.</p><button onClick={() => setPrivacyOpen(true)}>How privacy works</button></footer>
+    <footer className="app-footer"><p><Icon name="lock" />{t("The image is discarded after reading. Nothing is saved.")}</p><button onClick={() => setPrivacyOpen(true)}>{t("How privacy works")}</button></footer>
     {cameraOpen ? <CameraDialog onCapture={(canvas) => { setCameraOpen(false); acceptCanvas(canvas); }} onClose={() => setCameraOpen(false)} /> : null}
     {privacyOpen ? <PrivacyDialog onClose={() => setPrivacyOpen(false)} /> : null}
   </div>;
 }
+
+export function App() { return <LanguageProvider><AppContent /></LanguageProvider>; }

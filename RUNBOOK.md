@@ -16,7 +16,7 @@ From the repository root:
 
 ```sh
 npm ci
-npx playwright install chromium webkit
+npx playwright install chromium firefox webkit
 npm run verify
 npm start
 ```
@@ -39,6 +39,24 @@ Website deployment requires the user's explicit acceptance of the MVP. Until the
 4. Log the accepted commit, deployment run/URL, and observed verification in `decisions.jsonl`. A commit/build/deployment success does not substitute for browser acceptance.
 
 The Pages action builds/tests with `PAGES_BASE_PATH=/romanian-id-prefill/`. To repeat locally, stop a root-path preview first, then build, start, and test with that environment variable. Return to a root build afterward for the local user preview.
+
+## Vercel release
+
+Only after explicit publication acceptance, use the README Vercel settings. Verify the accepted commit and successful CI first. Importing a repository can immediately deploy it, so do not connect a Vercel project ahead of acceptance. Keep the root base path, all OCR/font assets local, and the supplied response headers. Disable analytics, Speed Insights and Toolbar injection. Verify the exact deployed commit, root asset paths, worker/WASM/model MIME/loading, and no requests during processing. Record the deployment URL and checks in `decisions.jsonl`.
+
+## Browser and language release acceptance
+
+Target Safari 18+ on macOS and iOS/iPadOS 18+, with current stable Chrome/Edge/Firefox compatibility. Run the automated production suite in Chromium, Firefox, desktop WebKit and mobile WebKit for both root and Pages-subpath builds. These engines and viewport emulation do not certify an installed Safari release or physical camera.
+
+Before claiming Safari acceptance, record the exact Safari/OS/device versions and accepted commit, and on a physical Mac plus iPhone or iPad over HTTPS:
+
+1. Start with a clean tab in English, then Romanian. Check complete instructions, labels, privacy text, validation/errors and keyboard/focus behavior; check Romanian diacritics and narrow portrait layout.
+2. Run the synthetic MRZ example. Check local assets finish before capture/upload is enabled. Crop/rotate, OCR, review, edit name/CNP, require acknowledgement, confirm and clear in each language.
+3. Select a synthetic JPEG/PNG from Photos/Files. Deny camera access and verify upload fallback; then allow camera, capture a synthetic printed MRZ, cancel and background the page. Verify the camera indicator stops on each exit.
+4. After image decoding, disconnect the network and complete OCR/review. With Web Inspector, verify no HTTP requests during image handling/OCR/review, no personal-data storage, and no lingering result after leaving/returning.
+5. Exercise an invalid checksum and missing CNP. Neither may silently produce a confirmed prefill. Confirm names can be edited with Romanian diacritics.
+
+Use synthetic identities for recorded evidence. Real-photo accuracy remains a separate benchmark; do not save personal IDs, OCR output or screenshots to the repository. Record untested versions/devices as unverified rather than extrapolating from Playwright.
 
 ## Resume
 

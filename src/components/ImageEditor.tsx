@@ -1,3 +1,4 @@
+import { useLanguage } from '../i18n';
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import type { PointerEvent } from 'react';
 import { clearCanvas } from '../lib/image';
@@ -28,6 +29,7 @@ const initialSelection = (image: HTMLCanvasElement): Selection => ({
 });
 
 export function ImageEditor({ image, onRead, onCancel }: ImageEditorProps) {
+  const { t, message } = useLanguage();
   const previewRef = useRef<HTMLCanvasElement>(null);
   const originalRef = useRef(image);
   const workingRef = useRef(image);
@@ -169,16 +171,16 @@ export function ImageEditor({ image, onRead, onCancel }: ImageEditorProps) {
   }
 
   return (
-    <section className="image-editor" aria-label="Select the machine-readable zone">
-      <h2>Select the MRZ</h2>
+    <section className="image-editor" aria-label={t("Select the machine-readable zone")}>
+      <h2>{t("Select the MRZ")}</h2>
       <p id={instructionsId} className="editor-instructions">
-        Select every row of letters, numbers and {'<'} in the MRZ. Drag its edges or use the controls below.
+        {t("Select every row of letters, numbers and < in the MRZ. Drag its edges or use the controls below.")}
       </p>
       <canvas
         ref={previewRef}
         className="image-editor-preview"
         role="img"
-        aria-label="Your identity card with the selected MRZ area highlighted"
+        aria-label={t("Your identity card with the selected MRZ area highlighted")}
         aria-describedby={instructionsId}
         onPointerDown={startDrag}
         onPointerMove={moveDrag}
@@ -187,22 +189,14 @@ export function ImageEditor({ image, onRead, onCancel }: ImageEditorProps) {
         onLostPointerCapture={() => { dragRef.current = null; }}
       />
       <div className="image-editor-toolbar">
-        <button className="button button-secondary" type="button" disabled={reading} onClick={() => rotate(-1)}>
-          Rotate left 90°
-        </button>
-        <button className="button button-secondary" type="button" disabled={reading} onClick={() => rotate(1)}>
-          Rotate right 90°
-        </button>
-        <button className="button button-secondary" type="button" disabled={reading} onClick={() => setSelection(initialSelection(workingRef.current))}>
-          Reset crop
-        </button>
-        <button className="button button-secondary" type="button" disabled={reading} onClick={() => setSelection({ top: 0, bottom: 100 })}>
-          Use whole image
-        </button>
+        <button className="button button-secondary" type="button" disabled={reading} onClick={() => rotate(-1)}>{t("Rotate left 90°")} </button>
+        <button className="button button-secondary" type="button" disabled={reading} onClick={() => rotate(1)}>{t("Rotate right 90°")} </button>
+        <button className="button button-secondary" type="button" disabled={reading} onClick={() => setSelection(initialSelection(workingRef.current))}>{t("Reset crop")} </button>
+        <button className="button button-secondary" type="button" disabled={reading} onClick={() => setSelection({ top: 0, bottom: 100 })}>{t("Use whole image")} </button>
       </div>
       <div className="crop-controls">
         <div className="crop-control">
-          <label htmlFor={topId}>Top edge <span>{selection.top}%</span></label>
+          <label htmlFor={topId}>{t("Top edge")} <span>{selection.top}%</span></label>
           <input
             id={topId}
             type="range"
@@ -211,12 +205,12 @@ export function ImageEditor({ image, onRead, onCancel }: ImageEditorProps) {
             step={1}
             value={selection.top}
             disabled={reading}
-            aria-valuetext={`${selection.top} percent from the top of the image`}
+            aria-valuetext={`${selection.top} ${t("percent from the top of the image")}`}
             onChange={(event) => setSelection((current) => ({ ...current, top: Number(event.target.value) }))}
           />
         </div>
         <div className="crop-control">
-          <label htmlFor={bottomId}>Bottom edge <span>{selection.bottom}%</span></label>
+          <label htmlFor={bottomId}>{t("Bottom edge")} <span>{selection.bottom}%</span></label>
           <input
             id={bottomId}
             type="range"
@@ -225,16 +219,16 @@ export function ImageEditor({ image, onRead, onCancel }: ImageEditorProps) {
             step={1}
             value={selection.bottom}
             disabled={reading}
-            aria-valuetext={`${selection.bottom} percent from the top of the image`}
+            aria-valuetext={`${selection.bottom} ${t("percent from the top of the image")}`}
             onChange={(event) => setSelection((current) => ({ ...current, bottom: Number(event.target.value) }))}
           />
         </div>
       </div>
-      {error && <p className="field-error" role="alert">{error}</p>}
+      {error && <p className="field-error" role="alert">{message(error)}</p>}
       <div className="image-editor-actions">
-        <button className="button button-secondary" type="button" disabled={reading} onClick={onCancel}>Discard image</button>
+        <button className="button button-secondary" type="button" disabled={reading} onClick={onCancel}>{t("Discard image")}</button>
         <button className="button button-primary" type="button" disabled={reading} onClick={readSelection}>
-          {reading ? 'Preparing selection…' : 'Read selected MRZ'}
+          {reading ? t("Preparing selection…") : t("Read selected MRZ")}
         </button>
       </div>
     </section>
