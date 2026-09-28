@@ -1,6 +1,13 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 
 export const romanian = {
+  "Read on this device": "Citire pe acest dispozitiv",
+  "Your confirmed details are now available to this app. How the app uses them depends on its privacy policy.": "Datele confirmate sunt acum disponibile aplicației. Modul în care aplicația le folosește depinde de politica sa de confidențialitate.",
+  "The reader discards the image after reading and does not save it.": "Cititorul elimină imaginea după citire și nu o salvează.",
+  "The reader makes no network requests while reading. Its OCR workers stop and temporary images are cleared after each reading, including failed readings. Other parts of this website have their own privacy practices.": "Cititorul nu face cereri de rețea în timpul citirii. Procesele OCR sunt oprite și imaginile temporare sunt eliminate după fiecare citire, inclusiv cele eșuate. Celelalte părți ale site-ului au propriile practici de confidențialitate.",
+  "The reader keeps editable fields in memory until cleared or closed. When you confirm, it passes the reviewed details to this app. The app decides whether to keep or send those details; clearing the reader does not erase copies held by the app.": "Cititorul păstrează câmpurile editabile în memorie până la ștergere sau închidere. Când confirmi, transmite datele verificate acestei aplicații. Aplicația decide dacă le păstrează sau le trimite; ștergerea cititorului nu elimină copiile păstrate de aplicație.",
+  "The hosting provider may log website visits, including IP addresses. Browser extensions and your device are outside the reader’s control. Clearing temporary data does not guarantee forensic memory erasure.": "Furnizorul de găzduire poate înregistra vizitele, inclusiv adresele IP. Extensiile browserului și dispozitivul nu sunt sub controlul cititorului. Eliminarea datelor temporare nu garantează ștergerea criminalistică a memoriei.",
+
   "Example of the code rows": "Exemplu de rânduri de cod",
   "Look for a block of text like this:": "Caută un grup de rânduri ca acesta:",
   "We could not read the code rows. Try a sharper, straight photo with every row visible.": "Nu am putut citi rândurile de cod. Încearcă o fotografie mai clară, dreaptă, în care se văd toate rândurile.",
@@ -273,9 +280,10 @@ export function translate(message: string, language: Language): string {
   return message;
 }
 const LanguageContext = createContext<{ language: Language; setLanguage: (language: Language) => void } | null>(null);
-export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguage] = useState<Language>(() => initialLanguage(navigator.languages.length ? navigator.languages : [navigator.language]));
-  useEffect(() => { document.documentElement.lang = language; document.title = language === 'ro' ? 'Local ID — Completare din cartea de identitate' : 'Local ID — Romanian identity-card prefill'; }, [language]);
+export function LanguageProvider({ children, language: preferredLanguage, onLanguageChange }: { children: ReactNode; language?: Language; onLanguageChange?: (language: Language) => void }) {
+  const [language, setLanguage] = useState<Language>(() => preferredLanguage ?? (typeof navigator === 'undefined' ? 'en' : initialLanguage(navigator.languages.length ? navigator.languages : [navigator.language])));
+  useEffect(() => { if (preferredLanguage) setLanguage(preferredLanguage); }, [preferredLanguage]);
+  useEffect(() => { onLanguageChange?.(language); }, [language, onLanguageChange]);
   return <LanguageContext.Provider value={{ language, setLanguage }}>{children}</LanguageContext.Provider>;
 }
 export function useLanguage() {

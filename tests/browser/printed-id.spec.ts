@@ -70,26 +70,26 @@ test('printed CI fields use actual local OCR, require review and release all ima
   await page.getByRole('radio', { name: 'No, read the other printed details', exact: true }).check();
   await context.setOffline(true);
   await page.getByRole('button', { name: 'Read printed details', exact: true }).click();
-  await expect(page.locator('#full-name')).toHaveValue('EXEMPLU ANA MARIA');
-  await expect(page.locator('#cnp')).toHaveValue(validCnp);
+  await expect(page.locator('[id$="-full-name"]')).toHaveValue('EXEMPLU ANA MARIA');
+  await expect(page.locator('[id$="-cnp"]')).toHaveValue(validCnp);
   await expect(page.getByLabel('Document series', { exact: true })).toHaveValue('AB');
   await expect(page.getByLabel('Document number', { exact: true })).toHaveValue('123456');
   await page.getByText('Address components', { exact: true }).click();
-  await expect(page.locator('#address-county')).toHaveValue('CLUJ');
-  await expect(page.locator('#address-locality')).toHaveValue('CLUJ-NAPOCA');
-  await expect(page.locator('#address-street')).toHaveValue('EXEMPLULUI');
-  await expect(page.locator('#address-number')).toHaveValue('12');
+  await expect(page.locator('[id$="-address-county"]')).toHaveValue('CLUJ');
+  await expect(page.locator('[id$="-address-locality"]')).toHaveValue('CLUJ-NAPOCA');
+  await expect(page.locator('[id$="-address-street"]')).toHaveValue('EXEMPLULUI');
+  await expect(page.locator('[id$="-address-number"]')).toHaveValue('12');
   await expect(page.getByRole('button', { name: 'Use these details', exact: true })).toBeDisabled();
   await assertCleanup(page);
   expect(requests).toEqual([]);
   await page.getByRole('checkbox').check();
-  await page.locator('#address-number').fill('13');
-  await expect(page.locator('#address-raw')).toHaveValue('');
+  await page.locator('[id$="-address-number"]').fill('13');
+  await expect(page.locator('[id$="-address-raw"]')).toHaveValue('');
   await expect(page.getByRole('checkbox')).not.toBeChecked();
   await page.getByRole('checkbox').check();
-  await page.locator('#address-raw').fill('Jud. IAȘI Mun. IAȘI Str. NOUĂ Nr. 5');
-  await expect(page.locator('#address-county')).toHaveValue('');
-  await expect(page.locator('#address-street')).toHaveValue('');
+  await page.locator('[id$="-address-raw"]').fill('Jud. IAȘI Mun. IAȘI Str. NOUĂ Nr. 5');
+  await expect(page.locator('[id$="-address-county"]')).toHaveValue('');
+  await expect(page.locator('[id$="-address-street"]')).toHaveValue('');
   await expect(page.getByRole('checkbox')).not.toBeChecked();
 });
 
@@ -99,7 +99,7 @@ test('a printed CNP with a bad checksum stays blocked after review', async ({ pa
   await upload(page, await card(page, invalid));
   await page.getByRole('radio', { name: 'No, read the other printed details', exact: true }).check();
   await page.getByRole('button', { name: 'Read printed details', exact: true }).click();
-  await expect(page.locator('#cnp')).toHaveValue(invalid);
+  await expect(page.locator('[id$="-cnp"]')).toHaveValue(invalid);
   await expect(page.getByRole('checkbox')).toBeDisabled();
   await expect(page.getByRole('button', { name: 'Use these details', exact: true })).toBeDisabled();
   await assertCleanup(page);
@@ -112,11 +112,11 @@ test('MRZ mode also reads printed address on the same card without network reque
   page.on('request', request => { if (/^https?:/.test(request.url())) requests.push(request.url()); });
   await upload(page, buffer);
   await page.getByRole('button', { name: 'Read my ID', exact: true }).click();
-  await expect(page.locator('#cnp')).toHaveValue(validCnp);
-  await expect(page.locator('#full-name')).toHaveValue('EXEMPLU ANA MARIA');
+  await expect(page.locator('[id$="-cnp"]')).toHaveValue(validCnp);
+  await expect(page.locator('[id$="-full-name"]')).toHaveValue('EXEMPLU ANA MARIA');
   await expect(page.getByLabel('Document number', { exact: true })).toHaveValue('123456');
   await page.getByText('Address components', { exact: true }).click();
-  await expect(page.locator('#address-street')).toHaveValue('EXEMPLULUI');
+  await expect(page.locator('[id$="-address-street"]')).toHaveValue('EXEMPLULUI');
   await assertCleanup(page);
   expect(requests).toEqual([]);
 });
@@ -127,12 +127,12 @@ test('missing CEI address remains unknown and language changes preserve reviewed
   await upload(page, await card(page, validCnp, false, 'cei'));
   await page.getByRole('radio', { name: 'No, read the other printed details', exact: true }).check();
   await page.getByRole('button', { name: 'Read printed details', exact: true }).click();
-  await expect(page.locator('#cnp')).toHaveValue(validCnp);
-  await expect(page.locator('#address-raw')).toHaveValue('');
+  await expect(page.locator('[id$="-cnp"]')).toHaveValue(validCnp);
+  await expect(page.locator('[id$="-address-raw"]')).toHaveValue('');
   await page.getByRole('button', { name: 'Română', exact: true }).click();
-  await expect(page.locator('#full-name')).toHaveValue('EXEMPLU ANA MARIA');
-  await expect(page.locator('#cnp')).toHaveValue(validCnp);
-  await expect(page.locator('#address-raw')).toHaveValue('');
+  await expect(page.locator('[id$="-full-name"]')).toHaveValue('EXEMPLU ANA MARIA');
+  await expect(page.locator('[id$="-cnp"]')).toHaveValue(validCnp);
+  await expect(page.locator('[id$="-address-raw"]')).toHaveValue('');
   await page.getByRole('button', { name: 'English', exact: true }).click();
   await page.getByRole('checkbox').check();
   await page.getByLabel('Document number', { exact: true }).fill('123457');
@@ -142,7 +142,7 @@ test('missing CEI address remains unknown and language changes preserve reviewed
   await page.getByRole('button', { name: 'Use these details', exact: true }).click();
   await page.getByRole('button', { name: 'Clear details', exact: true }).click();
   await expect(page.getByText('Local reader ready', { exact: true })).toBeVisible();
-  await expect(page.locator('#cnp')).toHaveValue('');
+  await expect(page.locator('[id$="-cnp"]')).toHaveValue('');
 });
 
 test('conflicting printed document number is shown alongside the checked MRZ value', async ({ page }) => {

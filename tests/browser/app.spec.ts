@@ -40,8 +40,8 @@ test('synthetic TD1 OCR stays offline, clears buffers, and requires fresh review
   await page.getByRole('button', { name: 'Try a synthetic example', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Find the code rows' })).toBeVisible();
   await page.getByRole('button', { name: 'Read my ID', exact: true }).click();
-  await expect(page.locator('#full-name')).toHaveValue('EXEMPLU ANA MARIA');
-  await expect(page.locator('#cnp')).toHaveValue(createSyntheticMrz().cnp);
+  await expect(page.locator('[id$="-full-name"]')).toHaveValue('EXEMPLU ANA MARIA');
+  await expect(page.locator('[id$="-cnp"]')).toHaveValue(createSyntheticMrz().cnp);
   await expect(page.getByText('Image discarded', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Use these details', exact: true })).toBeDisabled();
   const cleared = await page.evaluate(() => {
@@ -51,7 +51,7 @@ test('synthetic TD1 OCR stays offline, clears buffers, and requires fresh review
   expect(cleared.count).toBeGreaterThan(0); expect(cleared.cleared).toBe(true); expect(cleared.terminated).toBe(true);
   await page.getByRole('checkbox', { name: 'I have checked all populated ID details', exact: true }).check();
   await expect(page.getByRole('button', { name: 'Use these details', exact: true })).toBeEnabled();
-  await page.locator('#full-name').fill('EXEMPLU ANA-MARIA');
+  await page.locator('[id$="-full-name"]').fill('EXEMPLU ANA-MARIA');
   await expect(page.getByRole('checkbox')).not.toBeChecked();
   await expect(page.getByRole('button', { name: 'Use these details', exact: true })).toBeDisabled();
   await page.getByRole('checkbox').check();
@@ -62,7 +62,7 @@ test('synthetic TD1 OCR stays offline, clears buffers, and requires fresh review
   expect(storage).toEqual({ local: 0, session: 0, databases: [], caches: [] });
   await context.setOffline(false);
   await page.getByRole('button', { name: 'Clear details', exact: true }).click();
-  await expect(page.locator('#cnp')).toHaveValue('');
+  await expect(page.locator('[id$="-cnp"]')).toHaveValue('');
   await expect(page.getByText('Local reader ready', { exact: true })).toBeVisible();
 });
 
@@ -92,8 +92,8 @@ test('uploaded legacy TD2 image reads offline after decoding and reconstructs CN
   expect(await page.locator('input[type=file]').count()).toBe(0);
   await context.setOffline(true);
   await page.getByRole('button', { name: 'Read my ID', exact: true }).click();
-  await expect(page.locator('#full-name')).toHaveValue(fixture.fullName);
-  await expect(page.locator('#cnp')).toHaveValue(fixture.cnp);
+  await expect(page.locator('[id$="-full-name"]')).toHaveValue(fixture.fullName);
+  await expect(page.locator('[id$="-cnp"]')).toHaveValue(fixture.cnp);
   await page.getByText('View all validation checks', { exact: true }).click();
   await expect(page.getByRole('list', { name: 'Validation results' })).toBeVisible();
   expect(requests).toEqual([]);
@@ -108,7 +108,7 @@ test('failed MRZ check digit cannot prefill or be confirmed, and image buffers a
   await page.locator('input[type=file]').setInputFiles({ name: 'synthetic-invalid.png', mimeType: 'image/png', buffer });
   await page.getByRole('button', { name: 'Read my ID', exact: true }).click();
   await expect(page.getByText('Image discarded', { exact: true })).toBeVisible();
-  await expect(page.locator('#full-name')).toHaveValue('');
+  await expect(page.locator('[id$="-full-name"]')).toHaveValue('');
   await expect(page.getByRole('button', { name: 'Use these details', exact: true })).toBeDisabled();
   expect(await page.locator('canvas').count()).toBe(0);
 });
@@ -119,10 +119,10 @@ test('a CIS-style MRZ without CNP requires an explicit human CNP entry', async (
   const buffer = await fixturePng(page, fixture.lines);
   await page.locator('input[type=file]').setInputFiles({ name: 'synthetic-cis.png', mimeType: 'image/png', buffer });
   await page.getByRole('button', { name: 'Read my ID', exact: true }).click();
-  await expect(page.locator('#full-name')).toHaveValue(fixture.fullName);
-  await expect(page.locator('#cnp')).toHaveValue('');
+  await expect(page.locator('[id$="-full-name"]')).toHaveValue(fixture.fullName);
+  await expect(page.locator('[id$="-cnp"]')).toHaveValue('');
   await expect(page.getByRole('checkbox')).toBeDisabled();
-  await page.locator('#cnp').fill(createSyntheticMrz().cnp);
+  await page.locator('[id$="-cnp"]').fill(createSyntheticMrz().cnp);
   await expect(page.getByRole('checkbox')).toBeEnabled();
   await expect(page.getByRole('button', { name: 'Use these details', exact: true })).toBeDisabled();
 });
@@ -131,16 +131,16 @@ test('wrong checksum and valid-but-mismatched edited CNPs block confirmation', a
   await ready(page);
   await page.getByRole('button', { name: 'Try a synthetic example', exact: true }).click();
   await page.getByRole('button', { name: 'Read my ID', exact: true }).click();
-  await expect(page.locator('#cnp')).toHaveValue(createSyntheticMrz().cnp);
+  await expect(page.locator('[id$="-cnp"]')).toHaveValue(createSyntheticMrz().cnp);
   await page.getByRole('checkbox').check();
-  await page.locator('#cnp').fill('2960526400010');
+  await page.locator('[id$="-cnp"]').fill('2960526400010');
   await expect(page.getByRole('checkbox')).not.toBeChecked();
   await expect(page.getByRole('checkbox')).toBeDisabled();
-  await expect(page.locator('#cnp')).toHaveAttribute('aria-invalid', 'true');
+  await expect(page.locator('[id$="-cnp"]')).toHaveAttribute('aria-invalid', 'true');
   await expect(page.getByRole('button', { name: 'Use these details', exact: true })).toBeDisabled();
   for (const cnp of [withCnpChecksum('296052540001'), withCnpChecksum('196052640001')]) {
-    await page.locator('#cnp').fill(cnp);
-    await expect(page.locator('#cnp-issues')).toContainText('does not match the birth date or sex in the card code');
+    await page.locator('[id$="-cnp"]').fill(cnp);
+    await expect(page.locator('[id$="-cnp-issues"]')).toContainText('does not match the birth date or sex in the card code');
     await expect(page.getByRole('checkbox')).toBeDisabled();
     await expect(page.getByRole('button', { name: 'Use these details', exact: true })).toBeDisabled();
   }
@@ -161,7 +161,7 @@ test('unsupported files never reach OCR or leave a selected file reference', asy
   await page.locator('input[type=file]').setInputFiles({ name: 'synthetic.svg', mimeType: 'image/svg+xml', buffer: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"/>') });
   await expect(page.getByRole('alert')).toContainText('HEIC and SVG files are not supported');
   await expect(page.locator('input[type=file]')).toHaveValue('');
-  await expect(page.locator('#cnp')).toHaveValue('');
+  await expect(page.locator('[id$="-cnp"]')).toHaveValue('');
 });
 
 test('missing local model shows a recoverable startup error', async ({ page }) => {
@@ -193,7 +193,7 @@ test('returning from page cache during model loading retires that reader and rec
   });
   release?.();
   await expect(page.getByText('Local reader ready', { exact: true })).toBeVisible();
-  await expect(page.locator('#cnp')).toHaveValue('');
+  await expect(page.locator('[id$="-cnp"]')).toHaveValue('');
   await expect(page.getByRole('button', { name: 'Choose file', exact: true })).toBeEnabled();
 });
 
@@ -274,8 +274,8 @@ test('camera capture stops its stream and sends only a local canvas through the 
     canvas.width = 0; canvas.height = 0;
   });
   await page.getByRole('button', { name: 'Read my ID', exact: true }).click();
-  await expect(page.locator('#full-name')).toHaveValue(createSyntheticMrz().fullName);
-  await expect(page.locator('#cnp')).toHaveValue(createSyntheticMrz().cnp);
+  await expect(page.locator('[id$="-full-name"]')).toHaveValue(createSyntheticMrz().fullName);
+  await expect(page.locator('[id$="-cnp"]')).toHaveValue(createSyntheticMrz().cnp);
 });
 
 test('privacy information and responsive controls remain usable on a phone viewport', async ({ page }) => {
@@ -284,7 +284,7 @@ test('privacy information and responsive controls remain usable on a phone viewp
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.getByRole('button', { name: 'How privacy works', exact: true }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
-  await expect(page.getByRole('dialog')).toContainText('The hosting provider (GitHub Pages or Vercel) may log normal website visits');
+  await expect(page.getByRole('dialog')).toContainText('The hosting provider may log website visits');
   await page.getByRole('button', { name: 'Got it', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
 });

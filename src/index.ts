@@ -1,0 +1,16 @@
+export { LocalMrzReader } from './lib/ocr';
+export type { ScanResult, ReaderProgress } from './lib/ocr';
+export { LocalPrintedReader } from './lib/printed-ocr';
+export type { PrintedScanResult } from './lib/printed-ocr';
+export { LocalPdfReader, PdfError } from './lib/pdf';
+export type { PdfErrorCode } from './lib/pdf';
+export { LocalIdReader } from './lib/reader';
+export type { IdReadInput, IdReadOptions, IdScanResult } from './lib/reader';
+export type { ReaderOptions } from './lib/assets';
+export { assessMrz } from './lib/mrz';
+export type { MrzAssessment, MrzCheck } from './lib/mrz';
+export { validateCnp } from './lib/cnp';
+export type { CnpValidation } from './lib/cnp';
+export { parsePrintedId } from './lib/printed-id';
+export type { PrintedIdFields, PrintedAddress } from './lib/printed-id';
+export { decodeImage, clearCanvas, prepareMrzCanvas, MAX_FILE_BYTES } from './lib/image';

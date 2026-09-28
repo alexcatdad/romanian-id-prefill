@@ -1,8 +1,14 @@
-# Local ID — Romanian identity-card prefill
+# Local ID — Romanian identity-card reader library and demo
 
 A TypeScript browser app that reads a Romanian identity card’s machine-readable zone (MRZ), extracts name, CNP, document series/number and printed domicile candidates when available, validates the encoded identity fields, and displays reviewed ID details **only after human review**. The source PDF/image and all rendering/OCR processing stay in the browser. There is no backend, upload, account, analytics, or saved history.
 
 [Public repository](https://github.com/alexcatdad/romanian-id-prefill). GitHub Pages is the primary deployment target; Vercel is a supported static alternative. **[Live app](https://alexcatdad.github.io/romanian-id-prefill/)** — first published with user approval on 2026-09-28. Deployments remain manual; pushing source or passing CI does not publish changes.
+
+## Use in your contract app
+
+The reader is now an installable TypeScript library with a framework-independent core and optional React 19 upload/review UI. The website is its demo. Install the supplied `romanian-id-prefill-0.2.0.tgz` archive, copy the self-hosted runtime assets, and handle the widget's `onConfirm` callback. The package is not published on npm.
+
+See [the integration guide](docs/LIBRARY.md) for installation, React/core examples, asset paths, cleanup and the consuming app's privacy responsibilities. The library supplies reviewed ID details; contract workflows and document generation belong to the future app.
 
 ## Deployment, browser, and language targets
 
@@ -95,7 +101,7 @@ Verified on 2026-09-28:
 - **[Doubango’s MRZ fast LSTM model](https://github.com/DoubangoTelecom/tesseractMRZ)** targets machine-readable text rather than general prose. Its repository is archived; it is a frozen BSD-3-Clause model asset, not a claim of a maintained SDK. The exact commit, upstream source, size, raw/gzip SHA-256, and license are in `public/ocr/model.json` and `public/ocr/LICENSE.model.txt`. Browser compatibility and actual OCR are exercised in Chromium and WebKit tests. This is an MVP model, not a real-world accuracy guarantee.
 - **[mrz 5.0.2](https://github.com/cheminfo/mrz)** is a maintained TypeScript parser, released 2026-03-11. It handles TD1/TD2 and supplies field/check-digit details. `autocorrect: false` is explicit.
 
-`npm ci` and `npm run assets` copy the pinned package’s worker and all WASM variants into `public/ocr/`. The model is already vendored; neither build nor runtime fetches it from a CDN. The build verifies its compressed SHA-256. Fonts are bundled from npm, with no Google Fonts requests. Models and workers remain independently replaceable.
+After `npm ci`, `npm run assets` copies the pinned package’s worker and all WASM variants into `public/ocr/`. The model is already vendored; neither build nor runtime fetches it from a CDN. The build verifies its compressed SHA-256. Fonts are bundled from npm, with no Google Fonts requests. Models and workers remain independently replaceable.
 
 ## What is validated
 

@@ -87,3 +87,11 @@ Expanded ID verification uses `tests/browser/printed-id.spec.ts` for actual OCR 
 ## Plain-language reading guidance
 
 Keep the primary flow understandable without knowing MRZ or OCR: show the code-row example, ask whether those rows appear in the photo, and guide selection in English/Romanian. Keep technical check names inside the validation disclosure. Verify both choices, camera/PDF guidance and narrow-screen layout when changing these labels; parsing and check-digit rules must remain unchanged.
+
+## Library packaging and consumer verification
+
+Run `npm ci`, `npm run verify`, and `npm run test:package`. Repeat the demo build/browser tests with `PAGES_BASE_PATH=/romanian-id-prefill/`. The library build creates ignored `/lib` declarations/ES modules and `/runtime-assets`; never ignore `src/lib`. The demo imports the package exports, so build the library before development/typechecking. The packed-consumer test installs an archive into a temporary independent project, checks React-free import, strict TypeScript, asset copying, and offline Chromium/WebKit OCR plus mandatory review. Use synthetic documents only.
+
+After verification use `npm pack --ignore-scripts --pack-destination ..` to produce the local installable archive under outputs. Registry publishing and site deployment are separate user-approved actions. Update docs/LIBRARY.md when changing exports, callbacks, ownership, asset paths or peer versions. Never ship personal fixture data.
+
+Library 0.2.0 extraction passed 142 unit tests, 248 demo browser checks across root/Pages paths, and independent packed-consumer Chromium/WebKit OCR/PDF checks. The local archive includes runtime assets; npm registry publication and site deployment were not performed.

@@ -11,20 +11,20 @@ test('switching languages during offline review preserves accented names and mak
   await context.setOffline(true);
   await page.getByRole('button', { name: 'Try a synthetic example', exact: true }).click();
   await page.getByRole('button', { name: 'Read my ID', exact: true }).click();
-  await expect(page.locator('#cnp')).toHaveValue(createSyntheticMrz().cnp);
-  await page.locator('#full-name').fill('EXEMPLU ȘTEFĂNIȚĂ');
+  await expect(page.locator('[id$="-cnp"]')).toHaveValue(createSyntheticMrz().cnp);
+  await page.locator('[id$="-full-name"]').fill('EXEMPLU ȘTEFĂNIȚĂ');
   await page.getByRole('button', { name: 'Română', exact: true }).click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'ro');
-  await expect(page.locator('#full-name')).toHaveValue('EXEMPLU ȘTEFĂNIȚĂ');
-  await expect(page.locator('#cnp')).toHaveValue(createSyntheticMrz().cnp);
+  await expect(page.locator('[id$="-full-name"]')).toHaveValue('EXEMPLU ȘTEFĂNIȚĂ');
+  await expect(page.locator('[id$="-cnp"]')).toHaveValue(createSyntheticMrz().cnp);
   await expect(page.getByRole('checkbox')).not.toBeChecked();
-  await page.locator('#cnp').fill('2960526400010');
-  await expect(page.locator('#cnp-issues')).toContainText('Cifra de control a CNP-ului nu corespunde.');
+  await page.locator('[id$="-cnp"]').fill('2960526400010');
+  await expect(page.locator('[id$="-cnp-issues"]')).toContainText('Cifra de control a CNP-ului nu corespunde.');
   await expect(page.getByRole('checkbox')).toBeDisabled();
   await page.getByRole('button', { name: 'English', exact: true }).click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-  await expect(page.locator('#cnp-issues')).toContainText('The CNP checksum does not match.');
-  await page.locator('#cnp').fill(createSyntheticMrz().cnp);
+  await expect(page.locator('[id$="-cnp-issues"]')).toContainText('The CNP checksum does not match.');
+  await page.locator('[id$="-cnp"]').fill(createSyntheticMrz().cnp);
   await page.getByRole('checkbox').check();
   await page.getByRole('button', { name: 'Use these details', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Ready to prefill' })).toBeVisible();
@@ -42,7 +42,7 @@ test.describe('Romanian browser preference', () => {
     await context.setOffline(true);
     await demo.click();
     await page.getByRole('button', { name: 'Citește actul', exact: true }).click();
-    await expect(page.locator('#cnp')).toHaveValue(createSyntheticMrz().cnp);
+    await expect(page.locator('[id$="-cnp"]')).toHaveValue(createSyntheticMrz().cnp);
     const confirm = page.getByRole('button', { name: 'Folosește aceste date', exact: true });
     await expect(confirm).toBeDisabled();
     await page.getByRole('checkbox', { name: 'Am verificat toate datele completate ale actului', exact: true }).check();
@@ -51,7 +51,7 @@ test.describe('Romanian browser preference', () => {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     await context.setOffline(false);
     await page.getByRole('button', { name: 'Șterge datele', exact: true }).click();
-    await expect(page.locator('#cnp')).toHaveValue('');
+    await expect(page.locator('[id$="-cnp"]')).toHaveValue('');
     await expect(demo).toBeEnabled();
   });
   test('starts in Romanian and keeps language choice session-only', async ({ page }) => {

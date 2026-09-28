@@ -28,3 +28,5 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium firefox webkit
       - run: npm run verify
+      - run: node scripts/test-package.mjs
+        if: matrix.base == '/'

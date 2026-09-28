@@ -12,3 +12,7 @@ public/licenses/
 public/pdf/pdf.worker.mjs
 public/pdf/resources.json
 public/pdf/wasm/
+
+/lib/
+/runtime-assets/
+*.tgz

@@ -1,4 +1,5 @@
-import { AnnotationMode, PDFWorker, getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
+import type { PDFWorker } from 'pdfjs-dist/legacy/build/pdf.mjs';
+import { resolveAssetBase, type ReaderOptions } from './assets';
 import type { PDFDocumentLoadingTask, PDFDocumentProxy, RenderTask } from 'pdfjs-dist/types/src/display/api';
 
 export type PdfErrorCode = 'invalid' | 'too-large' | 'too-many-pages' | 'password' | 'render' | 'timeout' | 'cancelled' | 'not-ready';
@@ -10,6 +11,8 @@ const LIMIT_MS = 45_000;
 
 /** PDF bytes and decoded resources live only in memory. No document URL is accepted. */
 export class LocalPdfReader {
+  constructor(private options: ReaderOptions = {}) {}
+  private api: typeof import('pdfjs-dist/legacy/build/pdf.mjs') | null = null;
   private worker: Worker | null = null;
   private pdfWorker: PDFWorker | null = null;
   private document: PDFDocumentProxy | null = null;
@@ -30,8 +33,11 @@ export class LocalPdfReader {
     const generation = this.generation;
     const abort = new AbortController();
     this.abort = abort;
-    const base = new URL(`${import.meta.env.BASE_URL}pdf/`, window.location.origin);
+    const base = new URL('pdf/', resolveAssetBase(this.options));
     const pending = this.bounded((async () => {
+      const api = await import('pdfjs-dist/legacy/build/pdf.mjs');
+      if (generation !== this.generation) throw new PdfError('cancelled');
+      this.api = api;
       const response = await fetch(new URL('resources.json', base), { signal: abort.signal, credentials: 'omit', referrerPolicy: 'no-referrer' });
       if (!response.ok) throw new PdfError('not-ready');
       const packed = await response.json() as Record<string, string>;
@@ -51,7 +57,7 @@ export class LocalPdfReader {
         worker.addEventListener('error', (event) => { event.preventDefault(); reject(new PdfError('not-ready')); });
       });
       if (generation !== this.generation) throw new PdfError('cancelled');
-      const pdfWorker = PDFWorker.create({ port: worker, verbosity: 0 });
+      const pdfWorker = api.PDFWorker.create({ port: worker, verbosity: 0 });
       this.pdfWorker = pdfWorker;
       await pdfWorker.promise;
       if (generation !== this.generation) throw new PdfError('cancelled');
@@ -82,12 +88,12 @@ export class LocalPdfReader {
           return bytes.slice();
         }
       }
-      this.loading = getDocument({
+      this.loading = this.api!.getDocument({
         data, worker: this.pdfWorker, verbosity: 0,
         BinaryDataFactory: MemoryBinaryDataFactory, useWorkerFetch: false,
         // Fixed same-origin fallback modules were imported before ready. This
         // URL never depends on PDF bytes. All binary resources use the map.
-        wasmUrl: new URL(`${import.meta.env.BASE_URL}pdf/wasm/`, window.location.origin).href,
+        wasmUrl: new URL('pdf/wasm/', resolveAssetBase(this.options)).href,
         cMapPacked: true, useWasm: true, useSystemFonts: false,
         disableFontFace: true, enableXfa: false, stopAtErrors: true,
         maxImageSize: 40_000_000, canvasMaxAreaInBytes: 40_000_000 * 4,
@@ -110,6 +116,7 @@ export class LocalPdfReader {
 
   async render(pageNumber: number): Promise<HTMLCanvasElement> {
     if (!this.document) throw new PdfError('not-ready');
+    if (this.rendering) throw new PdfError('render');
     const generation = this.generation;
     let canvas: HTMLCanvasElement | null = null;
     try {
@@ -122,7 +129,7 @@ export class LocalPdfReader {
       canvas = document.createElement('canvas');
       canvas.width = Math.max(1, Math.min(2600, Math.ceil(viewport.width)));
       canvas.height = Math.max(1, Math.min(2600, Math.ceil(viewport.height)));
-      this.rendering = page.render({ canvas, viewport, annotationMode: AnnotationMode.DISABLE, background: 'rgb(255,255,255)' });
+      this.rendering = page.render({ canvas, viewport, annotationMode: this.api!.AnnotationMode.DISABLE, background: 'rgb(255,255,255)' });
       await this.bounded(this.rendering.promise, LIMIT_MS);
       this.rendering = null;
       page.cleanup();
@@ -137,14 +144,14 @@ export class LocalPdfReader {
 
   private bounded<T>(operation: Promise<T>, milliseconds: number): Promise<T> {
     let cancel: () => void = () => {};
-    let timeout = 0;
+    let timeout: ReturnType<typeof setTimeout> | undefined;
     const interruption = new Promise<never>((_, reject) => {
       cancel = () => reject(new PdfError('cancelled'));
       this.cancelOperation = cancel;
-      timeout = window.setTimeout(() => reject(new PdfError('timeout')), milliseconds);
+      timeout = globalThis.setTimeout(() => reject(new PdfError('timeout')), milliseconds);
     });
     return Promise.race([operation, interruption]).finally(() => {
-      window.clearTimeout(timeout);
+      globalThis.clearTimeout(timeout);
       if (this.cancelOperation === cancel) this.cancelOperation = null;
     });
   }
@@ -164,14 +171,14 @@ export class LocalPdfReader {
     this.worker = null; this.pdfWorker = null;
     this.loading = null; this.document = null;
     this.resources.clear(); this.pending = null;
-    let timeout = 0;
+    let timeout: ReturnType<typeof setTimeout> | undefined;
     try {
       if (loading) await Promise.race([
         loading.destroy().catch(() => {}),
-        new Promise<void>((resolve) => { timeout = window.setTimeout(resolve, 500); }),
+        new Promise<void>((resolve) => { timeout = globalThis.setTimeout(resolve, 500); }),
       ]);
     } finally {
-      window.clearTimeout(timeout);
+      globalThis.clearTimeout(timeout);
       pdfWorker?.destroy();
       worker?.terminate();
     }

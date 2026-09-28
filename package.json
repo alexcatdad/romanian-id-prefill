@@ -1,31 +1,28 @@
 {
   "name": "romanian-id-prefill",
-  "version": "0.1.0",
-  "private": true,
+  "version": "0.2.0",
   "type": "module",
   "engines": {
     "node": ">=22.13"
   },
   "scripts": {
-    "dev": "vite --host 127.0.0.1",
+    "dev": "npm run build:lib && vite --host 127.0.0.1",
     "assets": "node scripts/prepare-assets.mjs",
-    "build": "npm run assets && tsc -b && vite build",
+    "build": "npm run build:lib && tsc -b && vite build",
     "start": "node scripts/serve.mjs",
     "preview": "node scripts/serve.mjs",
-    "typecheck": "tsc -b --pretty false",
+    "typecheck": "npm run build:lib && tsc -b --pretty false",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "verify": "npm run test && npm run build && npm run test:e2e",
-    "postinstall": "node scripts/prepare-assets.mjs"
+    "build:lib": "npm run assets && vite build --config vite.lib.config.ts && tsc -p tsconfig.lib.json && node scripts/finish-library.mjs",
+    "prepack": "npm run build:lib",
+    "test:package": "npm run build:lib && node scripts/test-package.mjs"
   },
   "dependencies": {
-    "@fontsource/ibm-plex-mono": "5.3.0",
-    "@fontsource/manrope": "5.3.0",
     "mrz": "5.0.2",
     "pdfjs-dist": "6.3.289",
-    "react": "19.3.0",
-    "react-dom": "19.3.0",
     "tesseract.js": "7.0.0"
   },
   "devDependencies": {
@@ -36,6 +33,57 @@
     "@vitejs/plugin-react": "6.1.1",
     "typescript": "7.0.2",
     "vite": "8.3.1",
-    "vitest": "5.0.2"
+    "vitest": "5.0.2",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "@fontsource/manrope": "5.3.0",
+    "@fontsource/ibm-plex-mono": "5.3.0"
+  },
+  "description": "Browser-only Romanian ID reading, validation and optional React review UI with self-hosted OCR assets",
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alexcatdad/romanian-id-prefill.git"
+  },
+  "files": [
+    "lib/",
+    "runtime-assets/",
+    "bin/",
+    "README.md",
+    "THIRD_PARTY_NOTICES.md",
+    "docs/LIBRARY.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js"
+    },
+    "./react": {
+      "types": "./lib/react.d.ts",
+      "import": "./lib/react.js"
+    },
+    "./styles.css": "./lib/styles.css",
+    "./package.json": "./package.json"
+  },
+  "types": "./lib/index.d.ts",
+  "main": "./lib/index.js",
+  "module": "./lib/index.js",
+  "sideEffects": [
+    "./lib/styles.css"
+  ],
+  "bin": {
+    "romanian-id-assets": "./bin/copy-assets.mjs"
+  },
+  "peerDependencies": {
+    "react": ">=19.0.0 <20",
+    "react-dom": ">=19.0.0 <20"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    }
   }
 }

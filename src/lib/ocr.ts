@@ -1,3 +1,5 @@
+import { assertCanvas } from './canvas';
+import { resolveAssetBase, type ReaderOptions } from './assets';
 import { createWorker, OEM, PSM } from 'tesseract.js';
 import type { Line, Worker } from 'tesseract.js';
 import { assessMrz } from './mrz';
@@ -8,21 +10,23 @@ export interface ScanResult { assessment: MrzAssessment; confidence: number; pri
 export type ReaderProgress = { stage: 'preparing' | 'reading'; progress: number };
 
 export class LocalMrzReader {
+  private reading = false;
   private worker: Worker | null = null;
   private pending: Promise<void> | null = null;
   private generation = 0;
   private cancelRead: (() => void) | null = null;
   private onProgress: (value: ReaderProgress) => void;
-  constructor(onProgress: (value: ReaderProgress) => void) { this.onProgress = onProgress; }
+  constructor(onProgress: (value: ReaderProgress) => void = () => {}, private options: ReaderOptions = {}) { this.onProgress = onProgress; }
 
-  get ready() { return this.worker !== null; }
+  get ready() { return !this.reading && this.worker !== null; }
 
   prepare(): Promise<void> {
+    if (this.reading) return Promise.reject(new Error('A read is already in progress.'));
     if (this.worker) return Promise.resolve();
     if (this.pending) return this.pending;
     const generation = this.generation;
-    const originBase = new URL(import.meta.env.BASE_URL, window.location.origin);
-    this.pending = (async () => {
+    const originBase = resolveAssetBase(this.options);
+    const pending = (async () => {
       let candidate: Worker | null = null;
       let failInitialization: (() => void) | undefined;
       const initializationFailure = new Promise<never>((_, reject) => {
@@ -58,19 +62,23 @@ export class LocalMrzReader {
           preserve_interword_spaces: '1',
           user_defined_dpi: '300',
         });
-        if (generation !== this.generation) { await candidate.terminate(); return; }
+        if (generation !== this.generation) throw new Error('Preparation cancelled.');
         this.worker = candidate;
       } catch {
         await candidate?.terminate().catch(() => {});
         throw new Error('The local reader could not start. Reload this page and check that its local OCR assets are available.');
-      } finally { this.pending = null; }
+      } finally { if (generation === this.generation) this.pending = null; }
     })();
-    return this.pending;
+    this.pending = pending;
+    return pending;
   }
 
   async read(canvas: HTMLCanvasElement): Promise<ScanResult> {
+    if (this.reading) throw new Error('A read is already in progress.');
+    assertCanvas(canvas);
     const worker = this.worker;
     if (!worker) throw new Error('Wait for the local reader before choosing an image.');
+    this.reading = true;
     let encodedImage: string | null = null;
     try {
       // Avoid the library's canvas -> Blob -> FileReader path, which can fail
@@ -126,6 +134,7 @@ export class LocalMrzReader {
       if (this.worker === worker) this.worker = null;
       this.cancelRead = null;
       await worker.terminate().catch(() => {});
+      this.reading = false;
     }
   }
 
@@ -135,8 +144,10 @@ export class LocalMrzReader {
     this.cancelRead = null;
     const worker = this.worker;
     this.worker = null;
+    const pending = this.pending;
+    this.pending = null;
     await worker?.terminate().catch(() => {});
-    await this.pending?.catch(() => {});
+    await pending?.catch(() => {});
   }
 }
 

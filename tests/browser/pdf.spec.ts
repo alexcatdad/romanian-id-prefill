@@ -61,8 +61,8 @@ test('PDF page selection and OCR stay local, preserve mandatory review, and dest
   await expect.poll(async () => (await resources(page)).activePdfWorkers).toBe(0);
   await context.setOffline(true);
   await page.getByRole('button', { name: 'Read my ID', exact: true }).click();
-  await expect(page.locator('#full-name')).toHaveValue(fixture.fullName);
-  await expect(page.locator('#cnp')).toHaveValue(fixture.cnp);
+  await expect(page.locator('[id$="-full-name"]')).toHaveValue(fixture.fullName);
+  await expect(page.locator('[id$="-cnp"]')).toHaveValue(fixture.cnp);
   await expect(page.getByRole('button', { name: 'Use these details', exact: true })).toBeDisabled();
   await expect.poll(async () => resources(page)).toEqual({ activePdfWorkers: 0, activeCanvases: 0, allWorkersEnded: true });
   expect(requests).toEqual([]);
@@ -101,7 +101,7 @@ for (const invalid of [
     await ready(page); await upload(page, invalid.buffer());
     await expect(page.getByRole('alert')).toContainText(invalid.message);
     await expect(page.getByRole('heading', { name: 'Choose a PDF page', exact: true })).toHaveCount(0);
-    await expect(page.locator('#cnp')).toHaveValue('');
+    await expect(page.locator('[id$="-cnp"]')).toHaveValue('');
     await expect.poll(async () => (await resources(page)).activePdfWorkers).toBe(0);
     expect((await resources(page)).activeCanvases).toBe(0);
     expect(await page.locator('input[type=file]').inputValue()).toBe('');
@@ -127,8 +127,8 @@ test('scanned PDF pages use the same local image OCR pipeline', async ({ page })
   await expect(page.getByText('Page 1 of 1', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Use this page', exact: true }).click();
   await page.getByRole('button', { name: 'Read my ID', exact: true }).click();
-  await expect(page.locator('#cnp')).toHaveValue(fixture.cnp);
-  await expect(page.locator('#full-name')).toHaveValue(fixture.fullName);
+  await expect(page.locator('[id$="-cnp"]')).toHaveValue(fixture.cnp);
+  await expect(page.locator('[id$="-full-name"]')).toHaveValue(fixture.fullName);
   expect(requests).toEqual([]);
 });
 
