@@ -1,5 +1,5 @@
 {
-  "extends": "./tsconfig.json",
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "noEmit": false,
     "declaration": true,
@@ -11,6 +11,11 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true
   },
-  "include": ["src/index.ts", "src/react.tsx"],
-  "exclude": ["src/**/*.test.ts", "tests"]
+  "include": [
+    "src/index.ts"
+  ],
+  "exclude": [
+    "src/**/*.test.ts",
+    "tests"
+  ]
 }

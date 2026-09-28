@@ -21,35 +21,51 @@ async function run(command, args, cwd = temp) {
 try {
   // Packing, installing and resolving happen outside this checkout. No aliases,
   // source imports, workspace links or unpublished node_modules are available.
-  await run('npm', ['pack', '--ignore-scripts', '--silent', '--pack-destination', temp], root);
-  const tarball = (await readdir(temp)).find((name) => name.endsWith('.tgz'));
-  assert(tarball, 'npm pack must produce an archive');
+  const archives = {};
+  for (const name of ['ocr', 'roid']) {
+    const packageRoot = join(root, 'packages', name);
+    const packageMetadata = JSON.parse(await readFile(join(packageRoot, 'package.json'), 'utf8'));
+    await run('npm', ['pack', '--ignore-scripts', '--silent', '--pack-destination', temp], packageRoot);
+    archives[name] = `./${packageMetadata.name.replace('@', '').replace('/', '-')}-${packageMetadata.version}.tgz`;
+    await access(join(temp, archives[name]));
+  }
   await writeFile(join(temp, 'package.json'), JSON.stringify({ name: 'installed-reader-consumer', private: true, type: 'module' }));
-  await run('npm', ['install', '--ignore-scripts', '--omit=peer', '--no-audit', '--no-fund', `./${tarball}`]);
-  const installed = join(temp, 'node_modules', metadata.name);
-  await assert.rejects(access(join(installed, 'src')), 'Package must not depend on shipped source files');
-  await assert.rejects(access(join(temp, 'node_modules/react')), 'Core installation must not require React');
+  await run('npm', ['install', '--ignore-scripts', '--omit=peer', '--no-audit', '--no-fund', archives.ocr]);
+  const ocrInstalled = join(temp, 'node_modules/@alexcatdad/browser-ocr');
+  await assert.rejects(access(join(ocrInstalled, 'src')), 'OCR package must not require source files');
+  for (const dependency of ['react', 'mrz', '@alexcatdad/roid']) {
+    await assert.rejects(access(join(temp, 'node_modules', dependency)), `Generic OCR must not depend on ${dependency}`);
+  }
   await run(process.execPath, ['--input-type=module', '-e', `
     import assert from 'node:assert/strict';
-    import { validateCnp, assessMrz, parsePrintedId, LocalIdReader, LocalPdfReader } from '${metadata.name}';
+    import { LocalOcrReader, LocalPdfReader } from '@alexcatdad/browser-ocr';
+    assert.equal(typeof window, 'undefined');
+    assert.equal(typeof LocalOcrReader, 'function');
+    assert.equal(typeof LocalPdfReader, 'function');
+  `]);
+  await run('npm', ['install', '--ignore-scripts', '--omit=peer', '--no-audit', '--no-fund', archives.ocr, archives.roid]);
+  await assert.rejects(access(join(temp, 'node_modules/@alexcatdad/roid/src')), 'ROID must not require source files');
+  await assert.rejects(access(join(temp, 'node_modules/react')), 'Headless ROID installation must not require React');
+  await run(process.execPath, ['--input-type=module', '-e', `
+    import assert from 'node:assert/strict';
+    import { validateCnp, assessMrz, parsePrintedId, LocalIdReader } from '@alexcatdad/roid';
     assert.equal(typeof window, 'undefined');
     assert.equal(validateCnp('2960526400010').valid, false);
     assert.equal(assessMrz('not an identity').valid, false);
     assert.equal(typeof parsePrintedId, 'function');
     assert.equal(typeof LocalIdReader, 'function');
-    assert.equal(typeof LocalPdfReader, 'function');
   `]);
   const versions = { ...metadata.dependencies, ...metadata.devDependencies };
   await run('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund', ...['react', 'react-dom', '@types/react', '@types/react-dom', 'typescript', 'vite'].map((name) => `${name}@${versions[name]}`)]);
   await cp(join(root, 'tests/package'), temp, { recursive: true });
-  await run(join(temp, 'node_modules/.bin/romanian-id-assets'), ['--to', 'public/reader-assets']);
+  await run(join(temp, 'node_modules/.bin/roid-assets'), ['--to', 'public/reader-assets']);
   const assets = join(temp, 'public/reader-assets');
-  await run(join(temp, 'node_modules/.bin/romanian-id-assets'), ['--to', 'public/reader-assets']);
+  await run(join(temp, 'node_modules/.bin/roid-assets'), ['--to', 'public/reader-assets']);
   await writeFile(join(assets, 'host-owned.txt'), 'Preserve unrelated host assets');
   await writeFile(join(assets, 'ocr/model.json'), 'conflicting asset');
-  await assert.rejects(run(join(temp, 'node_modules/.bin/romanian-id-assets'), ['--to', 'public/reader-assets']), 'CLI must refuse differing destination assets');
+  await assert.rejects(run(join(temp, 'node_modules/.bin/roid-assets'), ['--to', 'public/reader-assets']), 'CLI must refuse differing destination assets');
   assert.equal(await readFile(join(assets, 'ocr/model.json'), 'utf8'), 'conflicting asset');
-  await run(join(temp, 'node_modules/.bin/romanian-id-assets'), ['--to', 'public/reader-assets', '--force']);
+  await run(join(temp, 'node_modules/.bin/roid-assets'), ['--to', 'public/reader-assets', '--force']);
   assert.equal(await readFile(join(assets, 'host-owned.txt'), 'utf8'), 'Preserve unrelated host assets');
   for (const path of ['ocr/local-worker.js', 'ocr/worker.min.js', 'ocr/mrz.traineddata.gz', 'ocr/eng.traineddata.gz', 'ocr/ron.traineddata.gz', 'pdf/local-worker.mjs', 'pdf/pdf.worker.mjs', 'pdf/resources.json']) await access(join(assets, path));
   const manifest = JSON.parse(await readFile(join(assets, 'ocr/model.json'), 'utf8'));
@@ -80,6 +96,19 @@ try {
       assert(startup.filter((url) => /^https?:/.test(url)).every((url) => new URL(url).origin === origin), 'All runtime assets must be same-origin');
       assert(startup.some((url) => url.includes('/reader-assets/ocr/')), 'OCR must use configured nested asset directory');
       assert(startup.some((url) => url.includes('/reader-assets/pdf/')), 'PDF must use configured nested asset directory');
+      await page.evaluate(() => window.prepareGenericReader());
+      const genericRequests = [];
+      const collectGenericRequests = (request) => { if (/^https?:/.test(request.url())) genericRequests.push(request.url()); };
+      page.on('request', collectGenericRequests);
+      await context.setOffline(true);
+      const generic = await page.evaluate(() => window.readGenericText());
+      assert.match(generic.first.text, /Independent optical reader/i);
+      assert.match(generic.second.text, /Independent optical reader/i);
+      assert(generic.first.confidence > 50);
+      assert.equal(generic.borrowed, true);
+      assert.deepEqual(genericRequests, [], 'Standalone generic OCR must remain offline during reads');
+      page.off('request', collectGenericRequests);
+      await context.setOffline(false);
       const fixture = await page.evaluate(async () => {
         const face = new FontFace('FixtureMono', 'url(/reader-assets/fonts/ibm-plex-mono-latin-400-normal.woff2)');
         document.fonts.add(await face.load());
@@ -148,10 +177,10 @@ try {
       assert.deepEqual(pdf.black, [0, 0, 0, 255]);
       assert.deepEqual(pdfRequests, []);
       assert.deepEqual(errors, []);
-      console.log(`${name}: installed React/headless OCR, PDF rendering, explicit review, callback, cleanup and offline privacy passed.`);
+      console.log(`${name}: installed standalone generic OCR, React/headless ROID, PDF rendering, explicit review, callback, cleanup and offline privacy passed.`);
     } finally { await browser.close(); }
   }
-  console.log('Packed package passed core-only Node import, independent TypeScript/build, assets and browser integration.');
+  console.log('Both packed packages passed independent Node imports, independent TypeScript/build, assets and browser integration.');
 } finally {
   if (server && server.exitCode === null) {
     server.kill('SIGTERM');

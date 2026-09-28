@@ -1,0 +1,62 @@
+{
+  "name": "@alexcatdad/roid",
+  "version": "0.3.0",
+  "description": "Romanian ID parsing, validation and optional React review UI powered by browser-ocr",
+  "type": "module",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alexcatdad/romanian-id-prefill.git"
+  },
+  "files": [
+    "lib/",
+    "runtime-assets/",
+    "bin/",
+    "README.md",
+    "THIRD_PARTY_NOTICES.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js"
+    },
+    "./react": {
+      "types": "./lib/react.d.ts",
+      "import": "./lib/react.js"
+    },
+    "./styles.css": "./lib/styles.css",
+    "./package.json": "./package.json"
+  },
+  "types": "./lib/index.d.ts",
+  "main": "./lib/index.js",
+  "sideEffects": [
+    "./lib/styles.css"
+  ],
+  "bin": {
+    "roid-assets": "./bin/copy-assets.mjs"
+  },
+  "dependencies": {
+    "@alexcatdad/browser-ocr": "0.1.0",
+    "mrz": "5.0.2"
+  },
+  "scripts": {
+    "build": "vite build --config vite.config.ts && tsc -p tsconfig.lib.json && node ../../scripts/finish-library.mjs roid",
+    "test": "vitest run --root ../.. --config vite.config.ts packages/roid/src",
+    "prepack": "npm run build"
+  },
+  "peerDependencies": {
+    "react": ">=19.0.0 <20",
+    "react-dom": ">=19.0.0 <20"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    }
+  }
+}

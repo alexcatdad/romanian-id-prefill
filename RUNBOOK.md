@@ -95,3 +95,15 @@ Run `npm ci`, `npm run verify`, and `npm run test:package`. Repeat the demo buil
 After verification use `npm pack --ignore-scripts --pack-destination ..` to produce the local installable archive under outputs. Registry publishing and site deployment are separate user-approved actions. Update docs/LIBRARY.md when changing exports, callbacks, ownership, asset paths or peer versions. Never ship personal fixture data.
 
 Library 0.2.0 extraction passed 142 unit tests, 248 demo browser checks across root/Pages paths, and independent packed-consumer Chromium/WebKit OCR/PDF checks. The local archive includes runtime assets; npm registry publication and site deployment were not performed.
+
+## Independent OCR and ROID packages
+
+The root is a private npm-workspace demo. `packages/ocr` builds `@alexcatdad/browser-ocr`; `packages/roid` builds `@alexcatdad/roid` and declares an exact OCR dependency. OCR must not import ROID, MRZ parsing, React, CNP rules or review UI. Keep independently versioned manifests and public APIs. Generic OCR outputs are caller-owned sensitive data; ROID discards text after parsing.
+
+Use `npm ci`, `npm run test:ocr`, `npm run test:roid`, `npm run verify`, then `npm run test:package`. `npm run build:ocr` works without building ROID; `npm run build:roid` needs its OCR dependency built. `npm run build:lib` builds in dependency order. `npm run pack:libs` packs both already-built packages under outputs. The consumer test installs OCR alone before installing both archives together, so accidental reverse dependencies are detected. Run the Pages-path build/browser suite before release and restore the root preview afterward.
+
+`browser-ocr-assets` copies engine/PDF/models; `roid-assets` composes those with UI fonts/licenses. Both validate all planned files before writing and refuse conflicting files unless `--force` is supplied. Registry publication and website deployment remain separate acceptance steps.
+
+Canonical worker bootstraps and pinned models live in `packages/ocr/assets`. Asset preparation copies them into ignored demo `public/ocr` and `public/pdf` and prepares the OCR package runtime. Do not edit generated public copies.
+
+Split verification: 21 OCR and 128 ROID unit tests; 124 demo checks at root plus 124 under the Pages subpath; independent archives passed strict browser TypeScript and Chromium/WebKit generic OCR, ROID review and PDF checks. OCR public declarations must not leak engine/Node types. The canonical asset sources and their network-boundary tests are inside OCR.

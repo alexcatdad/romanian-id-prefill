@@ -1,21 +1,57 @@
 # Install in another app
 
-The repository builds an ESM TypeScript package, `romanian-id-prefill`. Version 0.2.0 is supplied as a local npm archive; it has not been published to the npm registry. Use Node 22.13+ for tooling. The runtime is browser-only, with Safari/iOS 18+ as its baseline. Importing the core in Node is supported; OCR/canvas/PDF operations require a browser.
+The repository builds two independently versioned ESM TypeScript packages: `@alexcatdad/browser-ocr` 0.1.0 and `@alexcatdad/roid` 0.3.0. They are supplied as local npm archives; neither is published to the npm registry. ROID depends on OCR; OCR has no dependency on ROID or React. The private root website consumes these packages as a demo. Use Node 22.13+ for tooling. The runtime is browser-only, with Safari/iOS 18+ as its baseline. Importing the core in Node is supported; OCR/canvas/PDF operations require a browser.
 
 ```sh
-npm install /absolute/path/to/romanian-id-prefill-0.2.0.tgz
-npx romanian-id-assets --to public/reader-assets
+npm install /absolute/path/to/alexcatdad-browser-ocr-0.1.0.tgz /absolute/path/to/alexcatdad-roid-0.3.0.tgz
+npx roid-assets --to public/reader-assets
 ```
 
-The CLI copies packaged OCR models, workers, PDF resources, fonts and licenses without downloading anything. Identical files are skipped; conflicting files are refused unless `--force` is supplied. Unrelated destination files are retained. Re-run it after upgrading. Include the copied assets in your deployment. The models/resources are substantial; do not embed them in your JS bundle.
+Install both archives in the same command so npm can satisfy the unpublished OCR dependency locally. `roid-assets` composes the installed OCR package’s models, workers and PDF resources with ROID’s fonts/licenses, without duplicating engine assets in the ROID archive or downloading anything. Identical files are skipped; conflicting files are refused unless `--force` is supplied. Unrelated destination files are retained. Re-run it after upgrading. Include the copied assets in your deployment. The models/resources are substantial; do not embed them in your JS bundle.
+
+## Use OCR independently
+
+Install only the OCR archive when you do not need Romanian ID interpretation:
+
+```sh
+npm install /absolute/path/to/alexcatdad-browser-ocr-0.1.0.tgz
+npx browser-ocr-assets --to public/reader-assets
+```
+
+```ts
+import { LocalOcrReader, PSM, clearCanvas } from '@alexcatdad/browser-ocr';
+
+const reader = new LocalOcrReader(progress => {
+  // Update progress; never log document data.
+}, {
+  assetBaseUrl: '/reader-assets/',
+  languages: 'eng+ron',
+  pageSegmentation: PSM.AUTO,
+});
+await reader.prepare(); // Fetch public software assets before accepting input.
+try {
+  const result = await reader.read(canvas);
+  // result.text, result.confidence, result.lines are raw OCR, not validated fields.
+  // Use them locally and release them as soon as they are no longer needed.
+} finally {
+  clearCanvas(canvas);
+  await reader.dispose();
+}
+```
+
+`languages` selects locally hosted model names joined with `+` (default `eng`). Options also include `whitelist`, `parameters`, and `initParameters`. Per-read options include `rectangle`, `whitelist`, `pageSegmentation` and `includeLines`. Inspect the exported TypeScript types for their exact shapes. The packaged models include English, Romanian and the specialized MRZ model; additional languages require compatible self-hosted model assets.
+
+A successful generic OCR read retains its worker for further **sequential** reads. Concurrent reads are rejected. Unlike the ROID coordinator, it borrows canvases and returns raw text, confidence and line/symbol data: the caller owns those results and all canvas cleanup. Call `dispose()` when the session ends, on failure, or on page hide; `cancel()` disposes the session. A worker may retain recognition buffers until disposal. Confidence is an uncalibrated engine score, not a validation or authenticity claim.
+
+`LocalPdfReader`, `decodeImage`, `prepareTextCanvas` and `clearCanvas` also belong to OCR. It contains no CNP, MRZ identity interpretation, address extraction or review UI. This separation lets OCR lifecycle, recognition and PDF improvements ship independently from Romanian document rules.
 
 ## React integration
 
 Install React and React DOM 19 if your app does not already use them. They are optional peers: core-only users need neither. Import the CSS once (Vite apps should include `vite/client` in their TypeScript types).
 
 ```tsx
-import { IdReader, type ReviewedDetails } from 'romanian-id-prefill/react';
-import 'romanian-id-prefill/styles.css';
+import { IdReader, type ReviewedDetails } from '@alexcatdad/roid/react';
+import '@alexcatdad/roid/styles.css';
 
 export function PartyReader() {
   const accept = (details: ReviewedDetails) => {
@@ -42,7 +78,7 @@ The widget includes upload/capture, PDF page selection, crop selection, reading 
 ## Framework-independent API
 
 ```ts
-import { LocalIdReader } from 'romanian-id-prefill';
+import { LocalIdReader } from '@alexcatdad/roid';
 
 const reader = new LocalIdReader(progress => {
   // Display progress without logging document data.
@@ -75,6 +111,12 @@ The host must self-host assets, avoid analytics/session recording on this flow, 
 
 ## Package verification
 
-`npm run test:package` builds and packs the library, installs it in an independent temporary consumer, verifies React-free Node import, strict TypeScript, asset copy conflict handling, and real browser OCR/review without processing-time requests. The demo also imports public package exports. Automated WebKit is a regression proxy; physical Safari/camera and real-world photo accuracy still need acceptance testing.
+`npm run test:package` builds and packs both packages, installs them in an independent temporary consumer, verifies React-free Node import, strict TypeScript, asset copy conflict handling, and real browser OCR/review without processing-time requests. The demo also imports public package exports. Automated WebKit is a regression proxy; physical Safari/camera and real-world photo accuracy still need acceptance testing.
 
-The package declares `UNLICENSED`; no new public reuse license or registry publication is implied by this extraction.
+Both packages declare `UNLICENSED`; no new public reuse license or registry publication is implied by this extraction.
+
+## Development and versioning
+
+The packages share one npm workspace repository, with separate manifests, exports and version numbers. `npm run build:ocr` and `npm run test:ocr` target the generic layer. `npm run build:roid` and `npm run test:roid` target the ID layer; build OCR first after changes to its API. `npm run build:lib` builds both in dependency order. `npm run pack:libs` produces both archives for distribution, while the private root app remains a demo.
+
+ROID declares the OCR version it supports. An OCR release does not automatically change ROID's dependency: update it deliberately, rebuild and run the consumer tests. Separate registry publication or repository extraction is not part of this split.

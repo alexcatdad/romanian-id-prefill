@@ -3,12 +3,23 @@ import { createHash } from 'node:crypto';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const lib = join(root, 'lib');
-const runtime = join(root, 'runtime-assets');
+const kind = process.argv[2];
+if (!['ocr', 'roid'].includes(kind)) throw new Error('Choose ocr or roid');
+const packageRoot = join(root, 'packages', kind);
+const lib = join(packageRoot, 'lib');
+const runtime = join(packageRoot, 'runtime-assets');
 // Generated package artifacts only, never consumer destinations.
 await rm(runtime, { recursive: true, force: true });
 await mkdir(runtime, { recursive: true });
-for (const folder of ['ocr', 'pdf', 'licenses']) await cp(join(root, 'public', folder), join(runtime, folder), { recursive: true });
+if (kind === 'ocr') for (const folder of ['ocr', 'pdf']) await cp(join(root, 'public', folder), join(runtime, folder), { recursive: true });
+if (kind === 'roid') {
+ const licenses = join(root, 'public/licenses');
+ await mkdir(licenses, { recursive: true });
+ await mkdir(join(runtime, 'licenses'), {recursive:true});
+ for (const [source, target] of [['mrz/LICENSE', 'mrz-MIT.txt'], ['react/LICENSE', 'react-MIT.txt'], ['react-dom/LICENSE', 'react-dom-MIT.txt'], ['@fontsource/manrope/LICENSE', 'manrope-OFL.txt'], ['@fontsource/ibm-plex-mono/LICENSE', 'ibm-plex-mono-OFL.txt']]) {
+  await cp(join(root, 'node_modules', source), join(licenses, target));
+  await cp(join(licenses, target), join(runtime, 'licenses', target));
+ }
 
 const fontCss = [];
 for (const [family, weights] of [['manrope', [400, 500, 600, 700, 800]], ['ibm-plex-mono', [400]]]) {
@@ -25,7 +36,8 @@ for (const [family, weights] of [['manrope', [400, 500, 600, 700, 800]], ['ibm-p
   }
 }
 await cp(join(lib, 'fonts'), join(runtime, 'fonts'), { recursive: true });
-await writeFile(join(lib, 'styles.css'), fontCss.join('\n') + '\n' + await readFile(join(root, 'src/styles.css'), 'utf8'));
+await writeFile(join(lib, 'styles.css'), fontCss.join('\n') + '\n' + await readFile(join(packageRoot, 'src/styles.css'), 'utf8'));
+}
 
 async function walk(directory) {
   const result = [];
@@ -46,5 +58,5 @@ for (const path of await walk(runtime)) {
   files.push({ path: relative(runtime, path).split('\\').join('/'), bytes: data.length, sha256: createHash('sha256').update(data).digest('hex') });
 }
 files.sort((a, b) => a.path.localeCompare(b.path));
-await writeFile(join(runtime, 'manifest.json'), JSON.stringify({ version: JSON.parse(await readFile(join(root, 'package.json'), 'utf8')).version, files }, null, 2) + '\n');
-console.log(`Prepared typed library, scoped CSS, and ${files.length} verified self-hosted assets.`);
+await writeFile(join(runtime, 'manifest.json'), JSON.stringify({ version: JSON.parse(await readFile(join(packageRoot, 'package.json'), 'utf8')).version, files }, null, 2) + '\n');
+console.log(`Prepared ${kind} package and ${files.length} verified self-hosted assets.`);

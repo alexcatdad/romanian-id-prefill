@@ -1,0 +1,44 @@
+{
+  "name": "@alexcatdad/browser-ocr",
+  "version": "0.1.0",
+  "description": "Browser-local configurable OCR, image and PDF processing with self-hosted assets",
+  "type": "module",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alexcatdad/romanian-id-prefill.git"
+  },
+  "files": [
+    "lib/",
+    "runtime-assets/",
+    "bin/",
+    "README.md",
+    "THIRD_PARTY_NOTICES.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js"
+    },
+    "./assets": "./bin/assets.mjs",
+    "./package.json": "./package.json"
+  },
+  "types": "./lib/index.d.ts",
+  "main": "./lib/index.js",
+  "sideEffects": false,
+  "bin": {
+    "browser-ocr-assets": "./bin/copy-assets.mjs"
+  },
+  "dependencies": {
+    "tesseract.js": "7.0.0",
+    "pdfjs-dist": "6.3.289"
+  },
+  "scripts": {
+    "build": "node ../../scripts/prepare-assets.mjs && vite build --config vite.config.ts && tsc -p tsconfig.lib.json && node ../../scripts/finish-library.mjs ocr",
+    "test": "vitest run --root ../.. --config vite.config.ts packages/ocr/src",
+    "prepack": "npm run build"
+  }
+}

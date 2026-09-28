@@ -1,5 +1,5 @@
 import { createRoot } from 'react-dom/client';
-import 'romanian-id-prefill/styles.css';
+import '@alexcatdad/roid/styles.css';
 import './demo.css';
 import { App } from './App';
 

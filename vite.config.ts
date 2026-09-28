@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => ({
   }],
   build: { sourcemap: false, target: ['safari18', 'ios18', 'chrome111', 'edge111', 'firefox114'] },
   server: { host: '127.0.0.1', port: 5173, strictPort: true },
-  test: { include: ['src/**/*.test.ts', 'tests/**/*.test.ts'] },
+  test: { include: ['packages/*/src/**/*.test.ts', 'tests/**/*.test.ts'] },
   // Development HMR needs its own local socket; the production HTML is stricter.
   define: { __DEVELOPMENT__: mode === 'development' },
 }));

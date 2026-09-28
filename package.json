@@ -1,7 +1,11 @@
 {
-  "name": "romanian-id-prefill",
-  "version": "0.2.0",
+  "name": "romanian-id-prefill-demo",
+  "version": "0.3.0",
+  "private": true,
   "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
   "engines": {
     "node": ">=22.13"
   },
@@ -12,18 +16,17 @@
     "start": "node scripts/serve.mjs",
     "preview": "node scripts/serve.mjs",
     "typecheck": "npm run build:lib && tsc -b --pretty false",
-    "test": "vitest run",
+    "test": "npm run build:ocr && vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "verify": "npm run test && npm run build && npm run test:e2e",
-    "build:lib": "npm run assets && vite build --config vite.lib.config.ts && tsc -p tsconfig.lib.json && node scripts/finish-library.mjs",
-    "prepack": "npm run build:lib",
-    "test:package": "npm run build:lib && node scripts/test-package.mjs"
-  },
-  "dependencies": {
-    "mrz": "5.0.2",
-    "pdfjs-dist": "6.3.289",
-    "tesseract.js": "7.0.0"
+    "build:lib": "npm run build:ocr && npm run build:roid",
+    "test:package": "npm run build:lib && node scripts/test-package.mjs",
+    "build:ocr": "npm run build --workspace @alexcatdad/browser-ocr",
+    "build:roid": "npm run build --workspace @alexcatdad/roid",
+    "test:ocr": "npm run build:ocr && npm test --workspace @alexcatdad/browser-ocr",
+    "test:roid": "npm run build:ocr && npm test --workspace @alexcatdad/roid",
+    "pack:libs": "npm pack --workspace @alexcatdad/browser-ocr --workspace @alexcatdad/roid --ignore-scripts --pack-destination .."
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",
@@ -37,53 +40,13 @@
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "@fontsource/manrope": "5.3.0",
-    "@fontsource/ibm-plex-mono": "5.3.0"
+    "@fontsource/ibm-plex-mono": "5.3.0",
+    "@alexcatdad/roid": "0.3.0",
+    "@alexcatdad/browser-ocr": "0.1.0"
   },
-  "description": "Browser-only Romanian ID reading, validation and optional React review UI with self-hosted OCR assets",
   "license": "UNLICENSED",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/alexcatdad/romanian-id-prefill.git"
-  },
-  "files": [
-    "lib/",
-    "runtime-assets/",
-    "bin/",
-    "README.md",
-    "THIRD_PARTY_NOTICES.md",
-    "docs/LIBRARY.md"
-  ],
-  "exports": {
-    ".": {
-      "types": "./lib/index.d.ts",
-      "import": "./lib/index.js"
-    },
-    "./react": {
-      "types": "./lib/react.d.ts",
-      "import": "./lib/react.js"
-    },
-    "./styles.css": "./lib/styles.css",
-    "./package.json": "./package.json"
-  },
-  "types": "./lib/index.d.ts",
-  "main": "./lib/index.js",
-  "module": "./lib/index.js",
-  "sideEffects": [
-    "./lib/styles.css"
-  ],
-  "bin": {
-    "romanian-id-assets": "./bin/copy-assets.mjs"
-  },
-  "peerDependencies": {
-    "react": ">=19.0.0 <20",
-    "react-dom": ">=19.0.0 <20"
-  },
-  "peerDependenciesMeta": {
-    "react": {
-      "optional": true
-    },
-    "react-dom": {
-      "optional": true
-    }
   }
 }

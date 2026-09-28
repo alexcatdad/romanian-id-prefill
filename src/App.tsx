@@ -1,6 +1,6 @@
-import { IdReader } from 'romanian-id-prefill/react';
+import { IdReader } from '@alexcatdad/roid/react';
 import { createSyntheticMrz } from '../tests/fixtures';
-import { initialLanguage } from './i18n';
+const initialLanguage = (languages: readonly string[]): 'en' | 'ro' => languages[0]?.toLowerCase().split('-')[0] === 'ro' ? 'ro' : 'en';
 
 function demoSource() {
   const fixture = createSyntheticMrz('TD1');

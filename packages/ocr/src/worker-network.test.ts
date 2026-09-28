@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { createContext, runInContext } from 'node:vm';
 import { describe, expect, it, vi } from 'vitest';
 
-const bootstrap = readFileSync(new URL('../public/ocr/local-worker.js', import.meta.url), 'utf8');
+const bootstrap = readFileSync(new URL('../assets/ocr/local-worker.js', import.meta.url), 'utf8');
 
 function loadGuard() {
   const listeners = new Map<string, (event: { data: { action: string } }) => void>();

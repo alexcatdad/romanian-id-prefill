@@ -1,7 +1,7 @@
 import { createRoot } from 'react-dom/client';
-import { validateCnp } from 'romanian-id-prefill';
-import { IdReader } from 'romanian-id-prefill/react';
-import 'romanian-id-prefill/styles.css';
+import { validateCnp } from '@alexcatdad/roid';
+import { IdReader } from '@alexcatdad/roid/react';
+import '@alexcatdad/roid/styles.css';
 
 const result = document.querySelector<HTMLOutputElement>('#result')!;
 createRoot(document.querySelector('#app')!).render(
@@ -12,7 +12,7 @@ createRoot(document.querySelector('#app')!).render(
 );
 
 // This independent host also exercises the headless API without React controls.
-import { LocalIdReader, prepareMrzCanvas, type IdScanResult } from 'romanian-id-prefill';
+import { LocalIdReader, prepareMrzCanvas, type IdScanResult } from '@alexcatdad/roid';
 let coreReader: LocalIdReader | undefined;
 Object.assign(window, {
   async prepareCoreReader() {
@@ -28,7 +28,7 @@ Object.assign(window, {
   },
 });
 
-import { LocalPdfReader, clearCanvas } from 'romanian-id-prefill';
+import { LocalPdfReader, clearCanvas } from '@alexcatdad/browser-ocr';
 let pdfReader: LocalPdfReader | undefined;
 Object.assign(window, {
   async preparePdfReader() {
@@ -57,6 +57,32 @@ Object.assign(window, {
     } finally {
       if (canvas) clearCanvas(canvas);
       await pdfReader.dispose();
+    }
+  },
+});
+
+import { LocalOcrReader, PSM } from '@alexcatdad/browser-ocr';
+let genericReader: LocalOcrReader | undefined;
+Object.assign(window, {
+  async prepareGenericReader() {
+    genericReader = new LocalOcrReader(undefined, { assetBaseUrl: '/reader-assets/', languages: 'eng', pageSegmentation: PSM.SINGLE_BLOCK });
+    await genericReader.prepare();
+  },
+  async readGenericText() {
+    if (!genericReader) throw new Error('Prepare first');
+    const canvas = document.createElement('canvas');
+    canvas.width = 1200; canvas.height = 220;
+    const ctx = canvas.getContext('2d')!;
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#000'; ctx.font = '64px Arial';
+    ctx.fillText('Independent optical reader', 35, 130);
+    try {
+      const first = await genericReader.read(canvas);
+      const second = await genericReader.read(canvas);
+      return { first, second, borrowed: canvas.width === 1200 && canvas.height === 220 };
+    } finally {
+      clearCanvas(canvas);
+      await genericReader.dispose();
     }
   },
 });

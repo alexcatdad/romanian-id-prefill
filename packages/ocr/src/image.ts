@@ -155,8 +155,8 @@ export function clearCanvas(canvas: HTMLCanvasElement): void {
   canvas.height = 0;
 }
 
-/** Keep MRZ strokes intact while normalizing grayscale and contrast for OCR. */
-export function prepareMrzCanvas(source: HTMLCanvasElement): HTMLCanvasElement {
+/** Keep text strokes intact while normalizing grayscale and contrast for OCR. */
+export function prepareTextCanvas(source: HTMLCanvasElement): HTMLCanvasElement {
   checkDimensions(source.width, source.height);
   // The height limit and maximum 3× enlargement also bound accidental full-photo crops.
   const scale = Math.min(OCR_TARGET_WIDTH / source.width, MAX_IMAGE_SIDE / source.height, 3);
@@ -165,7 +165,7 @@ export function prepareMrzCanvas(source: HTMLCanvasElement): HTMLCanvasElement {
   canvas.height = Math.max(1, Math.round(source.height * scale));
   try {
     const context = canvas.getContext('2d', { willReadFrequently: true });
-    if (!context) throw new Error('This browser could not prepare the MRZ image.');
+    if (!context) throw new Error('This browser could not prepare the text image.');
     context.fillStyle = '#ffffff';
     context.fillRect(0, 0, canvas.width, canvas.height);
     context.imageSmoothingEnabled = true;

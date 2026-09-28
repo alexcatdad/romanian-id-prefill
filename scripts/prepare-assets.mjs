@@ -1,9 +1,11 @@
-import { copyFile, mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
+import { cp, copyFile, mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+// OCR owns the canonical bootstraps/models; public is generated demo output.
+await cp(join(root, 'packages/ocr/assets'), join(root, 'public'), { recursive: true });
 const destination = join(root, 'public/ocr');
 await mkdir(join(destination, 'core'), { recursive: true });
 for (const name of await readdir(join(root, 'node_modules/tesseract.js-core'))) {
@@ -14,14 +16,6 @@ for (const name of await readdir(join(root, 'node_modules/tesseract.js-core'))) 
 await copyFile(join(root, 'node_modules/tesseract.js/dist/worker.min.js'), join(destination, 'worker.min.js'));
 await copyFile(join(root, 'node_modules/tesseract.js/LICENSE.md'), join(destination, 'LICENSE.tesseract.txt'));
 await copyFile(join(root, 'node_modules/tesseract.js-core/LICENSE'), join(destination, 'LICENSE.core.txt'));
-const licenses = join(root, 'public/licenses');
-await mkdir(licenses, { recursive: true });
-await copyFile(join(root, 'node_modules/mrz/LICENSE'), join(licenses, 'mrz-MIT.txt'));
-await copyFile(join(root, 'node_modules/react/LICENSE'), join(licenses, 'react-MIT.txt'));
-await copyFile(join(root, 'node_modules/react-dom/LICENSE'), join(licenses, 'react-dom-MIT.txt'));
-for (const font of ['manrope', 'ibm-plex-mono']) {
-  await copyFile(join(root, `node_modules/@fontsource/${font}/LICENSE`), join(licenses, `${font}-OFL.txt`));
-}
 const manifest = JSON.parse(await readFile(join(destination, 'model.json'), 'utf8'));
 const model = await readFile(join(destination, 'mrz.traineddata.gz'));
 if (createHash('sha256').update(model).digest('hex') !== manifest.sha256) {
@@ -33,6 +27,8 @@ console.log('Local OCR worker, WASM variants, and verified MRZ model are ready.'
 // downloads and the startup overhead of hundreds of individual requests.
 const pdfSource = join(root, 'node_modules/pdfjs-dist');
 const pdfDestination = join(root, 'public/pdf');
+const licenses = join(pdfDestination, 'licenses');
+await mkdir(licenses, { recursive: true });
 await mkdir(join(pdfDestination, 'wasm'), { recursive: true });
 await copyFile(join(pdfSource, 'legacy/build/pdf.worker.mjs'), join(pdfDestination, 'pdf.worker.mjs'));
 const packedResources = {};

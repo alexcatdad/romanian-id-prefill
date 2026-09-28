@@ -16,3 +16,9 @@ public/pdf/wasm/
 /lib/
 /runtime-assets/
 *.tgz
+
+/packages/*/lib/
+/packages/*/runtime-assets/
+/public/pdf/licenses/
+/public/ocr/
+/public/pdf/

@@ -1,4 +1,4 @@
-# Local ID — Romanian identity-card reader library and demo
+# Local ID — browser OCR and Romanian identity-card packages
 
 A TypeScript browser app that reads a Romanian identity card’s machine-readable zone (MRZ), extracts name, CNP, document series/number and printed domicile candidates when available, validates the encoded identity fields, and displays reviewed ID details **only after human review**. The source PDF/image and all rendering/OCR processing stay in the browser. There is no backend, upload, account, analytics, or saved history.
 
@@ -6,7 +6,14 @@ A TypeScript browser app that reads a Romanian identity card’s machine-readabl
 
 ## Use in your contract app
 
-The reader is now an installable TypeScript library with a framework-independent core and optional React 19 upload/review UI. The website is its demo. Install the supplied `romanian-id-prefill-0.2.0.tgz` archive, copy the self-hosted runtime assets, and handle the widget's `onConfirm` callback. The package is not published on npm.
+Two independently versioned TypeScript packages live in this npm workspace repository:
+
+| Package | Owns |
+| --- | --- |
+| `@alexcatdad/browser-ocr` 0.1.0 | Generic configurable OCR, worker lifecycle, image/PDF handling and self-hosted engine assets; no Romanian ID rules or React |
+| `@alexcatdad/roid` 0.3.0 | Romanian MRZ/printed-field parsing, CNP validation, review coordination and optional React 19 UI; depends on `browser-ocr` |
+
+The private root application is a demo consuming ROID. OCR can be developed, tested and versioned independently; these are separate packages in one repository, not separate repositories. Install both supplied archives together, copy runtime assets with `roid-assets`, and handle the widget's `onConfirm` callback. Neither package is published on npm.
 
 See [the integration guide](docs/LIBRARY.md) for installation, React/core examples, asset paths, cleanup and the consuming app's privacy responsibilities. The library supplies reviewed ID details; contract workflows and document generation belong to the future app.
 
@@ -72,7 +79,7 @@ Two modes share the same review form:
 - **Yes, these rows are visible:** checked MRZ identity and document series/number plus printed fields from the full image. MRZ failures still block confirmation. A printed CNP used when the MRZ omits it must agree with its birth date and sex.
 - **Printed side without MRZ:** candidates from explicit name, CNP, document and domicile labels. CNP checksum/date checks still apply, but no MRZ validation is claimed. Blank fields require manual completion if needed; all populated fields require review.
 
-Printed extraction uses **official Tesseract tessdata_fast Romanian (`ron`) and English (`eng`) models**, pinned to commit `87416418657359cb625c412a48b6e1d6d41c29bd`. Compressed model hashes and upstream URLs are in `public/ocr/printed-models.json`; the build verifies them. Both models and their Apache-2.0 license are local assets. The models add about 3.05 MB compressed before file selection. See [official tessdata_fast](https://github.com/tesseract-ocr/tessdata_fast). Separate workers keep the MRZ alphabet and checks unchanged.
+Printed extraction uses **official Tesseract tessdata_fast Romanian (`ron`) and English (`eng`) models**, pinned to commit `87416418657359cb625c412a48b6e1d6d41c29bd`. Compressed model hashes and upstream URLs are in `packages/ocr/assets/ocr/printed-models.json`; the build verifies them. Both models and their Apache-2.0 license are local assets. The models add about 3.05 MB compressed before file selection. See [official tessdata_fast](https://github.com/tesseract-ocr/tessdata_fast). Separate workers keep the MRZ alphabet and checks unchanged.
 
 Address extraction keeps the explicitly labelled domicile section and splits marked county, locality, village, sector, street, number, block, staircase, floor and apartment. Missing or ambiguous components remain blank. Birthplace, issuing authority and CNP allocation code are never used to infer domicile. Generic card titles do not prove CEI versus CIS. Names, addresses and card type have no checksum; OCR scores are uncalibrated estimates. Manual edits reset review.
 
@@ -98,7 +105,7 @@ Verified on 2026-09-28:
 
 - **React 19.3 + Vite 8.3 + TypeScript**, compiled to static assets. No application server is required.
 - **[Tesseract.js 7.0.0](https://github.com/naptha/tesseract.js)** is the maintained browser-compatible WebWorker/WebAssembly engine. Its release was published 2025-12-15. The library documents [custom worker/core/language paths](https://github.com/naptha/tesseract.js/blob/master/docs/local-installation.md) and [disabling IndexedDB model caching](https://github.com/naptha/tesseract.js/blob/master/docs/api.md).
-- **[Doubango’s MRZ fast LSTM model](https://github.com/DoubangoTelecom/tesseractMRZ)** targets machine-readable text rather than general prose. Its repository is archived; it is a frozen BSD-3-Clause model asset, not a claim of a maintained SDK. The exact commit, upstream source, size, raw/gzip SHA-256, and license are in `public/ocr/model.json` and `public/ocr/LICENSE.model.txt`. Browser compatibility and actual OCR are exercised in Chromium and WebKit tests. This is an MVP model, not a real-world accuracy guarantee.
+- **[Doubango’s MRZ fast LSTM model](https://github.com/DoubangoTelecom/tesseractMRZ)** targets machine-readable text rather than general prose. Its repository is archived; it is a frozen BSD-3-Clause model asset, not a claim of a maintained SDK. The exact commit, upstream source, size, raw/gzip SHA-256, and license are in `packages/ocr/assets/ocr/model.json` and `packages/ocr/assets/ocr/LICENSE.model.txt`. Browser compatibility and actual OCR are exercised in Chromium and WebKit tests. This is an MVP model, not a real-world accuracy guarantee.
 - **[mrz 5.0.2](https://github.com/cheminfo/mrz)** is a maintained TypeScript parser, released 2026-03-11. It handles TD1/TD2 and supplies field/check-digit details. `autocorrect: false` is explicit.
 
 After `npm ci`, `npm run assets` copies the pinned package’s worker and all WASM variants into `public/ocr/`. The model is already vendored; neither build nor runtime fetches it from a CDN. The build verifies its compressed SHA-256. Fonts are bundled from npm, with no Google Fonts requests. Models and workers remain independently replaceable.
@@ -131,10 +138,24 @@ Production HTML puts a restrictive CSP before scripts: same-origin scripts/asset
 
 Browser extensions, OS/browser memory handling, and a compromised host are outside this application’s guarantee. Clearing canvases/references and terminating the worker is resource cleanup, not guaranteed forensic erasure of all memory copies.
 
+## Package development
+
+```sh
+npm run build:ocr
+npm run test:ocr
+npm run build:roid
+npm run test:roid
+npm run test:package
+npm run pack:libs
+```
+
+Build OCR before ROID when its API changes. `build:lib` builds both in dependency order. ROID pins the compatible OCR version explicitly; update that dependency when adopting a new OCR release. `pack:libs` creates both local installation archives. The independent consumer checks install both archives, rather than resolving workspace source files. See [the integration guide](docs/LIBRARY.md) for the public APIs and ownership rules.
+
 ## Test
 
 ```sh
-npm test
+npm run test:ocr
+npm run test:roid
 npm run typecheck
 npx playwright install chromium firefox webkit
 npm run verify

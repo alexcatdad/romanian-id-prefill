@@ -1,0 +1,22 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "outDir": "lib",
+    "rootDir": "src",
+    "types": [],
+    "allowImportingTsExtensions": false,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
+  },
+  "include": [
+    "src/index.ts",
+    "src/react.tsx"
+  ],
+  "exclude": [
+    "src/**/*.test.ts",
+    "tests"
+  ]
+}

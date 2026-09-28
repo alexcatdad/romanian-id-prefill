@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 // The actual imported renderer is exercised by browser tests. This executes the
 // production boundary after its fixed static modules have loaded.
-const guard = readFileSync(new URL('../public/pdf/local-worker.mjs', import.meta.url), 'utf8').replace(/^import .*;$/gm, '');
+const guard = readFileSync(new URL('../assets/pdf/local-worker.mjs', import.meta.url), 'utf8').replace(/^import .*;$/gm, '');
 function bootstrap() {
   const transport = vi.fn();
   const diagnostic = vi.fn();
