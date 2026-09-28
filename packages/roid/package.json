@@ -1,6 +1,6 @@
 {
   "name": "@alexcatdad/roid",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Romanian ID parsing, validation and optional React review UI powered by browser-ocr",
   "type": "module",
   "license": "UNLICENSED",
@@ -39,7 +39,7 @@
     "roid-assets": "./bin/copy-assets.mjs"
   },
   "dependencies": {
-    "@alexcatdad/browser-ocr": "0.1.0",
+    "@alexcatdad/browser-ocr": "git+https://github.com/alexcatdad/browser-ocr.git#1501c83fc27d100068370216055061ceea540d90",
     "mrz": "5.0.2"
   },
   "scripts": {

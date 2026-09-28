@@ -1,20 +1,20 @@
 # Install in another app
 
-The repository builds two independently versioned ESM TypeScript packages: `@alexcatdad/browser-ocr` 0.1.0 and `@alexcatdad/roid` 0.3.0. They are supplied as local npm archives; neither is published to the npm registry. ROID depends on OCR; OCR has no dependency on ROID or React. The private root website consumes these packages as a demo. Use Node 22.13+ for tooling. The runtime is browser-only, with Safari/iOS 18+ as its baseline. Importing the core in Node is supported; OCR/canvas/PDF operations require a browser.
+Two separate repositories maintain the independently versioned ESM TypeScript packages: [browser-ocr](https://github.com/alexcatdad/browser-ocr) (`@alexcatdad/browser-ocr` 0.1.1) and this repository (`@alexcatdad/roid` 0.3.1). Neither is published to the npm registry. ROID pins an immutable Git commit of the public OCR repository. ROID depends on OCR; OCR has no dependency on ROID or React. The private root website consumes these packages as a demo. Use Node 22.13+ for tooling. The runtime is browser-only, with Safari/iOS 18+ as its baseline. Importing the core in Node is supported; OCR/canvas/PDF operations require a browser.
 
 ```sh
-npm install /absolute/path/to/alexcatdad-browser-ocr-0.1.0.tgz /absolute/path/to/alexcatdad-roid-0.3.0.tgz
+npm install /absolute/path/to/alexcatdad-roid-0.3.1.tgz
 npx roid-assets --to public/reader-assets
 ```
 
-Install both archives in the same command so npm can satisfy the unpublished OCR dependency locally. `roid-assets` composes the installed OCR package’s models, workers and PDF resources with ROID’s fonts/licenses, without duplicating engine assets in the ROID archive or downloading anything. Identical files are skipped; conflicting files are refused unless `--force` is supplied. Unrelated destination files are retained. Re-run it after upgrading. Include the copied assets in your deployment. The models/resources are substantial; do not embed them in your JS bundle.
+Install the ROID archive with Node 22.13+ and Git available. npm fetches the pinned OCR source and builds it through its `prepare` script; do not disable installation scripts. Installation requires network access for public software dependencies and never handles identity data. `roid-assets` composes the installed OCR package’s models, workers and PDF resources with ROID’s fonts/licenses, without duplicating engine assets in the ROID archive or downloading anything. Identical files are skipped; conflicting files are refused unless `--force` is supplied. Unrelated destination files are retained. Re-run it after upgrading. Include the copied assets in your deployment. The models/resources are substantial; do not embed them in your JS bundle.
 
 ## Use OCR independently
 
 Install only the OCR archive when you do not need Romanian ID interpretation:
 
 ```sh
-npm install /absolute/path/to/alexcatdad-browser-ocr-0.1.0.tgz
+npm install /absolute/path/to/alexcatdad-browser-ocr-0.1.1.tgz
 npx browser-ocr-assets --to public/reader-assets
 ```
 
@@ -111,12 +111,35 @@ The host must self-host assets, avoid analytics/session recording on this flow, 
 
 ## Package verification
 
-`npm run test:package` builds and packs both packages, installs them in an independent temporary consumer, verifies React-free Node import, strict TypeScript, asset copy conflict handling, and real browser OCR/review without processing-time requests. The demo also imports public package exports. Automated WebKit is a regression proxy; physical Safari/camera and real-world photo accuracy still need acceptance testing.
+`npm run test:package` builds ROID, packs the installed external OCR dependency and local ROID package, installs them in an independent temporary consumer (including ROID’s pinned Git dependency), verifies React-free Node import, strict TypeScript, asset copy conflict handling, and real browser OCR/review without processing-time requests. The demo also imports public package exports. Automated WebKit is a regression proxy; physical Safari/camera and real-world photo accuracy still need acceptance testing.
 
 Both packages declare `UNLICENSED`; no new public reuse license or registry publication is implied by this extraction.
 
 ## Development and versioning
 
-The packages share one npm workspace repository, with separate manifests, exports and version numbers. `npm run build:ocr` and `npm run test:ocr` target the generic layer. `npm run build:roid` and `npm run test:roid` target the ID layer; build OCR first after changes to its API. `npm run build:lib` builds both in dependency order. `npm run pack:libs` produces both archives for distribution, while the private root app remains a demo.
+The packages have separate repositories, manifests, exports and version numbers. Work on the generic engine in its own checkout:
 
-ROID declares the OCR version it supports. An OCR release does not automatically change ROID's dependency: update it deliberately, rebuild and run the consumer tests. Separate registry publication or repository extraction is not part of this split.
+```sh
+git clone https://github.com/alexcatdad/browser-ocr.git
+cd browser-ocr
+npm ci
+npm test
+npm run build
+npm pack
+```
+
+Work on Romanian ID rules and the demo in this repository:
+
+```sh
+git clone https://github.com/alexcatdad/romanian-id-prefill.git
+cd romanian-id-prefill
+npm ci
+npm run build:roid
+npm run test:roid
+npm run test:package
+npm run pack:libs
+```
+
+`build:lib` builds ROID against the installed OCR package; it does not build a local OCR workspace. `pack:libs` produces the ROID archive. Build an optional standalone OCR archive in the OCR repository.
+
+An OCR release does not automatically change ROID. To adopt an OCR change, update the immutable Git commit in both ROID’s dependency and the demo’s development dependency, refresh the lockfile, then rebuild and run the consumer and browser tests. Keep any installed OCR dependency generated from that exact commit. Neither repository’s publication or deployment is triggered by this integration.

@@ -1,28 +1,56 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-const mock = vi.hoisted(() => ({ createWorker: vi.fn() }));
-vi.mock('tesseract.js', () => ({ createWorker: mock.createWorker, OEM: { LSTM_ONLY: 1 }, PSM: { SINGLE_BLOCK: 6, AUTO: 3, SINGLE_WORD: 8 } }));
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createSyntheticMrz } from '../../tests/fixtures';
+
+const mock = vi.hoisted(() => ({
+  engine: { ready: true, prepare: vi.fn(), read: vi.fn(), dispose: vi.fn() },
+}));
+// ROID tests its public OCR dependency boundary, not Tesseract internals.
+// Engine initialization/cancellation is covered in the independent OCR repo.
+vi.mock('@alexcatdad/browser-ocr', async (original) => ({
+  ...await original<typeof import('@alexcatdad/browser-ocr')>(),
+  LocalOcrReader: class { constructor() { return mock.engine; } },
+}));
 import { LocalMrzReader } from './ocr';
 import { LocalPrintedReader } from './printed-ocr';
-afterEach(() => { vi.unstubAllGlobals(); mock.createWorker.mockReset(); });
-describe.each([LocalMrzReader, LocalPrintedReader])('reader initialization lifecycle', Reader => {
-  it('rejects a cancelled preparation without wiping its replacement', async () => {
-    vi.stubGlobal('location', { origin: 'https://example.test' });
-    let finish!: (worker: unknown) => void;
-    const oldWorker = { setParameters: vi.fn(async () => {}), terminate: vi.fn(async () => {}) };
-    const newWorker = { setParameters: vi.fn(async () => {}), terminate: vi.fn(async () => {}) };
-    mock.createWorker.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; })).mockResolvedValueOnce(newWorker);
-    const reader = new Reader(); const initial = reader.prepare(); const rejected = expect(initial).rejects.toThrow();
-    const disposed = reader.dispose();
-    await reader.prepare(); expect(reader.ready).toBe(true);
-    finish(oldWorker); await rejected; await disposed;
-    expect(reader.ready).toBe(true); expect(oldWorker.terminate).toHaveBeenCalled(); expect(newWorker.terminate).not.toHaveBeenCalled();
-    await reader.dispose(); expect(reader.ready).toBe(false);
-  });
-  it('rejects malformed inputs without consuming a prepared worker', async () => {
-    vi.stubGlobal('location', { origin: 'https://example.test' });
-    mock.createWorker.mockResolvedValue({ setParameters: vi.fn(async () => {}), terminate: vi.fn(async () => {}) });
+const canvas = () => ({ width: 100, height: 50, toDataURL: () => '', getContext: () => ({}) }) as unknown as HTMLCanvasElement;
+beforeEach(() => {
+  vi.resetAllMocks();
+  mock.engine.ready = true;
+  mock.engine.prepare.mockResolvedValue(undefined);
+  mock.engine.dispose.mockResolvedValue(undefined);
+});
+describe.each([LocalMrzReader, LocalPrintedReader])('ROID reader dependency lifecycle', Reader => {
+  it('rejects malformed input before consuming the prepared engine', async () => {
     const reader = new Reader(); await reader.prepare();
     await expect(reader.read('https://example.test/private' as never)).rejects.toThrow('canvas');
-    expect(reader.ready).toBe(true); await reader.dispose();
+    expect(mock.engine.read).not.toHaveBeenCalled();
+    expect(mock.engine.dispose).not.toHaveBeenCalled();
+    expect(reader.ready).toBe(true);
+    await reader.dispose();
   });
+  it('disposes the engine after a failed read and exposes only its safe error', async () => {
+    mock.engine.read.mockRejectedValue(new Error('synthetic private engine diagnostic'));
+    const reader = new Reader(); await reader.prepare();
+    await expect(reader.read(canvas())).rejects.toThrow(Reader === LocalMrzReader ? 'code rows' : 'printed details');
+    expect(mock.engine.dispose).toHaveBeenCalledOnce();
+  });
+});
+it('parses MRZ output then discards raw text/geometry and disposes the engine', async () => {
+  const fixture = createSyntheticMrz();
+  const raw = { text: fixture.lines.join('\n'), confidence: 95, lines: [] };
+  mock.engine.read.mockResolvedValue(raw);
+  const reader = new LocalMrzReader(); await reader.prepare();
+  const result = await reader.read(canvas());
+  expect(result.assessment).toMatchObject({ valid: true, fullName: fixture.fullName, cnp: fixture.cnp, rawLines: [] });
+  expect(raw.text).toBe(''); expect(raw.lines).toEqual([]);
+  expect(mock.engine.dispose).toHaveBeenCalledOnce();
+});
+it('parses printed output then discards raw text/geometry and disposes the engine', async () => {
+  const raw = { text: 'Nume / Surname\nEXEMPLU\nPrenume / Given names\nANA MARIA', confidence: 95, lines: [] };
+  mock.engine.read.mockResolvedValue(raw);
+  const reader = new LocalPrintedReader(); await reader.prepare();
+  const result = await reader.read(canvas());
+  expect(result.fields.fullName).toBe('EXEMPLU ANA MARIA');
+  expect(raw.text).toBe(''); expect(raw.lines).toEqual([]);
+  expect(mock.engine.dispose).toHaveBeenCalledOnce();
 });

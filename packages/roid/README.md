@@ -1,13 +1,13 @@
 # @alexcatdad/roid
 
-Romanian identity-card interpretation and explicit user review, powered by `@alexcatdad/browser-ocr`. Version 0.3.0 is available as a local archive; it is not published on npm. Install both unpublished packages together:
+Romanian identity-card interpretation and explicit user review, powered by `@alexcatdad/browser-ocr`. Version 0.3.1 is available as a local archive; it is not published on npm. OCR is maintained in the separate [browser-ocr repository](https://github.com/alexcatdad/browser-ocr), pinned to an immutable Git commit. Install with Node 22.13+ and Git:
 
 ```sh
-npm install /absolute/path/to/alexcatdad-browser-ocr-0.1.0.tgz /absolute/path/to/alexcatdad-roid-0.3.0.tgz
+npm install /absolute/path/to/alexcatdad-roid-0.3.1.tgz
 npx roid-assets --to public/reader-assets
 ```
 
-The asset command composes the installed OCR package's engine/model/PDF assets with ROID fonts/licenses. The ROID archive does not duplicate the OCR engine assets. All assets must be hosted on your app's own HTTP(S) origin.
+Installation fetches public software dependencies and runs the pinned OCR package’s preparation build; keep npm installation scripts enabled. No identity data is involved. The asset command composes the installed OCR package's engine/model/PDF assets with ROID fonts/licenses. The ROID archive does not duplicate the OCR engine assets. All assets must be hosted on your app's own HTTP(S) origin.
 
 Optional React 19 integration:
 
@@ -31,6 +31,6 @@ MRZ checks and CNP date/checksum validation do not authenticate a card or valida
 
 Reads stay local and personal data is not persisted by the package. Self-hosted asset preparation precedes processing. Consuming apps must control their own analytics, storage, callbacks, cleanup and security policy.
 
-Develop from the repository root with `npm run build:ocr` first, then `npm run build:roid` and `npm run test:roid`. ROID versions independently and pins its compatible OCR dependency. The private root site is a demo, not a third distributable package.
+Develop from this repository root with `npm ci`, `npm run build:roid` and `npm run test:roid`. OCR development, builds and tests happen in its separate repository. ROID versions independently and pins its compatible OCR dependency. The private root site is a demo, not a third distributable package.
 
 [Full integration guide](https://github.com/alexcatdad/romanian-id-prefill/blob/main/docs/LIBRARY.md). License: `UNLICENSED`; include packaged third-party notices and licenses. No registry publication or public reuse license is implied.

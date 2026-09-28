@@ -3,16 +3,13 @@ import { createHash } from 'node:crypto';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const kind = process.argv[2];
-if (!['ocr', 'roid'].includes(kind)) throw new Error('Choose ocr or roid');
-const packageRoot = join(root, 'packages', kind);
+const packageRoot = join(root, 'packages/roid');
 const lib = join(packageRoot, 'lib');
 const runtime = join(packageRoot, 'runtime-assets');
 // Generated package artifacts only, never consumer destinations.
 await rm(runtime, { recursive: true, force: true });
 await mkdir(runtime, { recursive: true });
-if (kind === 'ocr') for (const folder of ['ocr', 'pdf']) await cp(join(root, 'public', folder), join(runtime, folder), { recursive: true });
-if (kind === 'roid') {
+{
  const licenses = join(root, 'public/licenses');
  await mkdir(licenses, { recursive: true });
  await mkdir(join(runtime, 'licenses'), {recursive:true});
@@ -59,4 +56,4 @@ for (const path of await walk(runtime)) {
 }
 files.sort((a, b) => a.path.localeCompare(b.path));
 await writeFile(join(runtime, 'manifest.json'), JSON.stringify({ version: JSON.parse(await readFile(join(packageRoot, 'package.json'), 'utf8')).version, files }, null, 2) + '\n');
-console.log(`Prepared ${kind} package and ${files.length} verified self-hosted assets.`);
+console.log(`Prepared ROID package and ${files.length} verified self-hosted assets.`);

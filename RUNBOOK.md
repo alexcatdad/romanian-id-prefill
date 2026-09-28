@@ -107,3 +107,11 @@ Use `npm ci`, `npm run test:ocr`, `npm run test:roid`, `npm run verify`, then `n
 Canonical worker bootstraps and pinned models live in `packages/ocr/assets`. Asset preparation copies them into ignored demo `public/ocr` and `public/pdf` and prepares the OCR package runtime. Do not edit generated public copies.
 
 Split verification: 21 OCR and 128 ROID unit tests; 124 demo checks at root plus 124 under the Pages subpath; independent archives passed strict browser TypeScript and Chromium/WebKit generic OCR, ROID review and PDF checks. OCR public declarations must not leak engine/Node types. The canonical asset sources and their network-boundary tests are inside OCR.
+
+## External OCR repository (supersedes workspace OCR commands above)
+
+OCR source, models, worker guards, build tooling and independent tests now live at https://github.com/alexcatdad/browser-ocr. This repository retains only `packages/roid` and the demo. The root and ROID dependency declarations must pin the same full OCR Git commit. `npm ci` installs the external package; npm prepares its typed modules/runtime assets from that commit. Initial software installation needs GitHub/npm access; document processing remains browser-local.
+
+Run `npm ci`, `npm run verify`, and `npm run test:package`. `npm run assets` copies hash-verified assets from the installed dependency; do not modify generated public files. `npm run pack:libs` packs only ROID. Its standalone archive resolves the pinned external OCR dependency. To upgrade OCR: finish and verify an OCR commit in its own repo, update both dependency pins here, refresh the lockfile with npm install, and rerun tests including the Pages path. Do not use a sibling checkout or workspace link as production evidence. No npm registry or website deployment is performed by this migration.
+
+Migration validation: OCR commit `1501c83fc27d100068370216055061ceea540d90` passed its independent GitHub CI and 22 unit tests. ROID passed 130 units, 248 browser checks across root/Pages, and the packed consumer with a fresh npm cache and SSH disabled. The ROID-only installation resolved the exact public Git dependency. Keep adapter tests at the public OCR API boundary; engine tests are owned by the OCR repository.

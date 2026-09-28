@@ -12,4 +12,4 @@ Verification: `npm run verify` (unit tests, production build/type checks, and Ch
 
 Deployment compatibility: static GitHub Pages subpath and Vercel root. Safari 18+ / iOS and iPadOS 18+ are primary targets; WebKit automation is a proxy and physical Safari acceptance must be recorded separately. Keep English/Romanian UI and accessibility text complete. Publication to either host still requires the user’s acceptance.
 
-Package boundaries: `packages/ocr` is generic and must not depend on ROID, React, MRZ parsers or Romanian identity rules. `packages/roid` consumes OCR through its public package API. Root is a private demo. Keep independent package versions and packed-consumer tests; canonical OCR bootstraps/models belong in `packages/ocr/assets`.
+Package boundaries: OCR is developed in https://github.com/alexcatdad/browser-ocr. This repository owns ROID and the demo only. Depend on an exact OCR Git commit and its public package API; do not copy engine source or model assets here. Upgrade the pin deliberately and run the packed-consumer/privacy checks. Generated public OCR/PDF assets come from the installed package.

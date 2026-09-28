@@ -13,4 +13,4 @@ No third-party service processes images or OCR in this app. These notices do not
 
 Official Tesseract tessdata_fast English and Romanian models, commit `87416418657359cb625c412a48b6e1d6d41c29bd`, Apache License 2.0. Vendored compressed models, full license and hashes/provenance are in `public/ocr/` (`printed-models.json`). Upstream: https://github.com/tesseract-ocr/tessdata_fast .
 
-Package-specific notices are in `packages/ocr/THIRD_PARTY_NOTICES.md` and `packages/roid/THIRD_PARTY_NOTICES.md`. Canonical worker/model assets live in `packages/ocr/assets`; public asset directories are generated.
+ROID notices are in `packages/roid/THIRD_PARTY_NOTICES.md`. OCR notices and canonical worker/model assets live in the separate https://github.com/alexcatdad/browser-ocr repository and installed package; public asset directories here are generated.

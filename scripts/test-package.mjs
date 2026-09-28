@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
+import { createRequire } from 'node:module';
 import { chromium, webkit, expect } from '@playwright/test';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -21,9 +22,14 @@ async function run(command, args, cwd = temp) {
 try {
   // Packing, installing and resolving happen outside this checkout. No aliases,
   // source imports, workspace links or unpublished node_modules are available.
+  const require = createRequire(import.meta.url);
+  const ocrRoot = dirname(require.resolve('@alexcatdad/browser-ocr/package.json'));
+  const roidMetadata = JSON.parse(await readFile(join(root, 'packages/roid/package.json'), 'utf8'));
+  const ocrPin = roidMetadata.dependencies['@alexcatdad/browser-ocr'];
+  assert.match(ocrPin, /^git\+https:\/\/github\.com\/alexcatdad\/browser-ocr\.git#[0-9a-f]{40}$/, 'ROID must pin the external OCR repository to an immutable commit');
+  assert.equal(metadata.devDependencies['@alexcatdad/browser-ocr'], ocrPin, 'Demo and ROID must use the same external OCR commit');
   const archives = {};
-  for (const name of ['ocr', 'roid']) {
-    const packageRoot = join(root, 'packages', name);
+  for (const [name, packageRoot] of [['ocr', ocrRoot], ['roid', join(root, 'packages/roid')]]) {
     const packageMetadata = JSON.parse(await readFile(join(packageRoot, 'package.json'), 'utf8'));
     await run('npm', ['pack', '--ignore-scripts', '--silent', '--pack-destination', temp], packageRoot);
     archives[name] = `./${packageMetadata.name.replace('@', '').replace('/', '-')}-${packageMetadata.version}.tgz`;
@@ -43,7 +49,14 @@ try {
     assert.equal(typeof LocalOcrReader, 'function');
     assert.equal(typeof LocalPdfReader, 'function');
   `]);
-  await run('npm', ['install', '--ignore-scripts', '--omit=peer', '--no-audit', '--no-fund', archives.ocr, archives.roid]);
+  // Remove the standalone archive so npm cannot satisfy the Git dependency by version deduplication.
+  await run('npm', ['uninstall', '--ignore-scripts', '--no-audit', '--no-fund', '@alexcatdad/browser-ocr']);
+  // Install ROID alone: its immutable Git dependency must resolve without a sibling checkout.
+  // Scripts are enabled because npm builds the pinned Git package during prepare.
+  await run('npm', ['install', '--omit=peer', '--no-audit', '--no-fund', archives.roid]);
+  const consumerLock = JSON.parse(await readFile(join(temp, 'package-lock.json'), 'utf8'));
+  const installedOcr = consumerLock.packages['node_modules/@alexcatdad/roid/node_modules/@alexcatdad/browser-ocr'] ?? consumerLock.packages['node_modules/@alexcatdad/browser-ocr'];
+  assert(installedOcr.resolved.endsWith(ocrPin.slice(ocrPin.indexOf('#'))), `ROID must resolve the pinned external OCR commit: ${JSON.stringify(Object.fromEntries(Object.entries(consumerLock.packages).filter(([path]) => path.includes('browser-ocr'))))}`);
   await assert.rejects(access(join(temp, 'node_modules/@alexcatdad/roid/src')), 'ROID must not require source files');
   await assert.rejects(access(join(temp, 'node_modules/react')), 'Headless ROID installation must not require React');
   await run(process.execPath, ['--input-type=module', '-e', `

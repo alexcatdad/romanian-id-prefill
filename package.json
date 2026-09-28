@@ -1,10 +1,10 @@
 {
   "name": "romanian-id-prefill-demo",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "type": "module",
   "workspaces": [
-    "packages/*"
+    "packages/roid"
   ],
   "engines": {
     "node": ">=22.13"
@@ -16,17 +16,15 @@
     "start": "node scripts/serve.mjs",
     "preview": "node scripts/serve.mjs",
     "typecheck": "npm run build:lib && tsc -b --pretty false",
-    "test": "npm run build:ocr && vitest run",
+    "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "verify": "npm run test && npm run build && npm run test:e2e",
-    "build:lib": "npm run build:ocr && npm run build:roid",
+    "build:lib": "npm run assets && npm run build:roid",
     "test:package": "npm run build:lib && node scripts/test-package.mjs",
-    "build:ocr": "npm run build --workspace @alexcatdad/browser-ocr",
     "build:roid": "npm run build --workspace @alexcatdad/roid",
-    "test:ocr": "npm run build:ocr && npm test --workspace @alexcatdad/browser-ocr",
-    "test:roid": "npm run build:ocr && npm test --workspace @alexcatdad/roid",
-    "pack:libs": "npm pack --workspace @alexcatdad/browser-ocr --workspace @alexcatdad/roid --ignore-scripts --pack-destination .."
+    "test:roid": "npm test --workspace @alexcatdad/roid",
+    "pack:libs": "npm pack --workspace @alexcatdad/roid --ignore-scripts --pack-destination .."
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",
@@ -41,8 +39,8 @@
     "react-dom": "19.3.0",
     "@fontsource/manrope": "5.3.0",
     "@fontsource/ibm-plex-mono": "5.3.0",
-    "@alexcatdad/roid": "0.3.0",
-    "@alexcatdad/browser-ocr": "0.1.0"
+    "@alexcatdad/roid": "0.3.1",
+    "@alexcatdad/browser-ocr": "git+https://github.com/alexcatdad/browser-ocr.git#1501c83fc27d100068370216055061ceea540d90"
   },
   "license": "UNLICENSED",
   "repository": {
