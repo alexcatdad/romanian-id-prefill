@@ -234,17 +234,38 @@ test('camera capture stops its stream and sends only a local canvas through the 
     Object.defineProperty(MediaDevices.prototype, 'getUserMedia', { configurable: true, value: async () => {
       const canvas = document.createElement('canvas'); canvas.width = 1600; canvas.height = 285;
       const drawing = canvas.getContext('2d')!;
-      drawing.fillStyle = '#fff'; drawing.fillRect(0, 0, canvas.width, canvas.height);
-      drawing.fillStyle = '#171936'; drawing.font = '48px "IBM Plex Mono"';
-      lines.forEach((line, index) => drawing.fillText(line, 58, 75 + index * 80));
+      const paint = () => {
+        drawing.fillStyle = '#fff'; drawing.fillRect(0, 0, canvas.width, canvas.height);
+        drawing.fillStyle = '#171936'; drawing.font = '48px "IBM Plex Mono"';
+        lines.forEach((line, index) => drawing.fillText(line, 58, 75 + index * 80));
+      };
+      paint();
       const stream = canvas.captureStream(5);
-      state.__cameraTrack = stream.getTracks()[0]; state.__cameraCanvas = canvas;
+      const track = stream.getTracks()[0];
+      state.__cameraTrack = track; state.__cameraCanvas = canvas;
+      // Canvas capture publishes on paints. Supply live frames after the
+      // stream starts, just as a camera does, across browser media pipelines.
+      const frames = setInterval(() => {
+        if (track.readyState === 'ended') {
+          clearInterval(frames); canvas.width = 0; canvas.height = 0;
+        } else paint();
+      }, 100);
       return stream;
     } });
   }, createSyntheticMrz().lines);
   await ready(page);
   await page.getByRole('button', { name: 'Use camera', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Capture image', exact: true })).toBeEnabled();
+  try {
+    await expect(page.getByRole('button', { name: 'Capture image', exact: true })).toBeEnabled();
+  } catch (failure) {
+    // Test diagnostics contain media state only, never image or OCR contents.
+    console.error('Synthetic camera readiness', await page.evaluate(() => {
+      const video = document.querySelector('video');
+      const track = (window as typeof window & { __cameraTrack?: MediaStreamTrack }).__cameraTrack;
+      return { width: video?.videoWidth, height: video?.videoHeight, readyState: video?.readyState, paused: video?.paused, error: video?.error?.code, trackState: track?.readyState };
+    }));
+    throw failure;
+  }
   await page.getByRole('button', { name: 'Capture image', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Select the MRZ' })).toBeVisible();
   expect(await page.evaluate(() => (window as typeof window & { __cameraTrack: MediaStreamTrack }).__cameraTrack.readyState)).toBe('ended');
