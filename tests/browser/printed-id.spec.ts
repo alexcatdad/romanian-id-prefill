@@ -67,7 +67,7 @@ test('printed CI fields use actual local OCR, require review and release all ima
   const requests: string[] = [];
   page.on('request', request => { if (/^https?:/.test(request.url())) requests.push(request.url()); });
   await upload(page, buffer);
-  await page.getByRole('radio', { name: 'Printed side without MRZ', exact: true }).check();
+  await page.getByRole('radio', { name: 'No, read the other printed details', exact: true }).check();
   await context.setOffline(true);
   await page.getByRole('button', { name: 'Read printed details', exact: true }).click();
   await expect(page.locator('#full-name')).toHaveValue('EXEMPLU ANA MARIA');
@@ -97,7 +97,7 @@ test('a printed CNP with a bad checksum stays blocked after review', async ({ pa
   await ready(page);
   const invalid = validCnp.slice(0, 12) + String((Number(validCnp[12]) + 1) % 10);
   await upload(page, await card(page, invalid));
-  await page.getByRole('radio', { name: 'Printed side without MRZ', exact: true }).check();
+  await page.getByRole('radio', { name: 'No, read the other printed details', exact: true }).check();
   await page.getByRole('button', { name: 'Read printed details', exact: true }).click();
   await expect(page.locator('#cnp')).toHaveValue(invalid);
   await expect(page.getByRole('checkbox')).toBeDisabled();
@@ -111,7 +111,7 @@ test('MRZ mode also reads printed address on the same card without network reque
   const requests: string[] = [];
   page.on('request', request => { if (/^https?:/.test(request.url())) requests.push(request.url()); });
   await upload(page, buffer);
-  await page.getByRole('button', { name: 'Read selected MRZ', exact: true }).click();
+  await page.getByRole('button', { name: 'Read my ID', exact: true }).click();
   await expect(page.locator('#cnp')).toHaveValue(validCnp);
   await expect(page.locator('#full-name')).toHaveValue('EXEMPLU ANA MARIA');
   await expect(page.getByLabel('Document number', { exact: true })).toHaveValue('123456');
@@ -125,7 +125,7 @@ test('MRZ mode also reads printed address on the same card without network reque
 test('missing CEI address remains unknown and language changes preserve reviewed candidates', async ({ page }) => {
   await ready(page);
   await upload(page, await card(page, validCnp, false, 'cei'));
-  await page.getByRole('radio', { name: 'Printed side without MRZ', exact: true }).check();
+  await page.getByRole('radio', { name: 'No, read the other printed details', exact: true }).check();
   await page.getByRole('button', { name: 'Read printed details', exact: true }).click();
   await expect(page.locator('#cnp')).toHaveValue(validCnp);
   await expect(page.locator('#address-raw')).toHaveValue('');
@@ -148,9 +148,9 @@ test('missing CEI address remains unknown and language changes preserve reviewed
 test('conflicting printed document number is shown alongside the checked MRZ value', async ({ page }) => {
   await ready(page);
   await upload(page, await card(page, validCnp, true, 'conflict'));
-  await page.getByRole('button', { name: 'Read selected MRZ', exact: true }).click();
+  await page.getByRole('button', { name: 'Read my ID', exact: true }).click();
   await expect(page.getByLabel('Document number', { exact: true })).toHaveValue('123456');
   await expect(page.getByText('Different readings — compare both with your card before confirming.', { exact: true })).toBeVisible();
-  await expect(page.getByText(/Document number: MRZ 123456; Printed text 654321/)).toBeVisible();
+  await expect(page.getByText(/Document number: Code rows 123456; Printed text 654321/)).toBeVisible();
   await assertCleanup(page);
 });

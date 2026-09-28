@@ -119,7 +119,7 @@ export class LocalMrzReader {
       result.data.blocks = null;
       return { assessment: { ...assessment, rawLines: [] }, confidence: Math.max(0, Math.min(100, Math.round(result.data.confidence))) };
     } catch {
-      throw new Error('The MRZ could not be read. Try a sharper, straight photo with every MRZ line in the selection.');
+      throw new Error('We could not read the code rows. Try a sharper, straight photo with every row visible.');
     } finally {
       encodedImage = null;
       // Tesseract holds image buffers in its WASM memory until termination.

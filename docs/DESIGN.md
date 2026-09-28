@@ -34,3 +34,7 @@ The long original-reading check list is available in a native disclosure. MRZ/CN
 ## ID understanding extension
 
 The review now includes document series/number, explicit card-type uncertainty and printed domicile candidates. The address text is multiline; detailed components sit in an expandable section. The confirmation checkbox covers every populated field. A second read mode supports a printed side without MRZ, with clear absence-of-MRZ validation messaging. Existing visual language, English/Romanian controls and phone layout remain; no seller/buyer or contract workspace is introduced.
+
+## Plain-language guidance
+
+The primary flow now says “code rows”, shows a small illustrative letter/number/`<` block, and asks whether those rows are visible. The main action is “Read my ID”. Camera, PDF, upload and review text use the same English/Romanian guidance. Technical MRZ terminology and original parser findings remain available in the detailed validation disclosure. The phone layout was visually checked at 390 × 844 and the desktop at 1440 × 1000, including switching to printed-only reading.

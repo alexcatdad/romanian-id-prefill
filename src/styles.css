@@ -266,3 +266,7 @@ fieldset.review-fields details > div { margin-top: 14px; }
 .review-fields textarea { width: 100%; box-sizing: border-box; min-height: 100px; resize: vertical; border: 1px solid #cfd3e7; border-radius: 8px; color: #171936; padding: 12px; font: inherit; line-height: 1.5; }
 .workspace:has(.scan-result) { align-items: start; }
 fieldset.review-fields label { margin-top: 0; margin-bottom: 8px; }
+
+.code-example { margin-top: 18px; padding: 14px 18px; border: 1px dashed #aca3df; border-radius: 10px; background: #f7f6fd; }
+.code-example p { font-size: 14px; margin-bottom: 8px; }
+.code-example span { display: block; font-family: 'IBM Plex Mono', monospace; font-size: clamp(14px, 2vw, 22px); line-height: 1.6; letter-spacing: 1px; color: #5145a4; overflow-wrap: anywhere; }

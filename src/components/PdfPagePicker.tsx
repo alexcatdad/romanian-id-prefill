@@ -48,7 +48,7 @@ export function PdfPagePicker({ reader, pageCount, onSelect, onCancel }: {
   const pageReady = !busy && !error && renderedPage === page;
   return <section className="pdf-picker" aria-label={t('Choose a PDF page')}>
     <h2>{t('Choose a PDF page')}</h2>
-    <p className="panel-description">{t('Choose the page containing your identity card. Next, select its MRZ.')}</p>
+    <p className="panel-description">{t('Choose the page showing your ID. We will guide you through reading it next.')}</p>
     <p className="pdf-page-count" aria-live="polite">{language === 'ro' ? `Pagina ${page} din ${pageCount}` : `Page ${page} of ${pageCount}`}</p>
     {busy ? <p role="status">{t('Rendering the page on this device…')}</p> : null}
     <canvas ref={preview} className="pdf-page-preview" role="img" aria-label={t('Preview of the selected PDF page')} hidden={busy || Boolean(error)} />

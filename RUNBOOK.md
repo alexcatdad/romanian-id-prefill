@@ -83,3 +83,7 @@ Read `docs/CONTRACT_PARTY_FIELDS.md` before expanding extraction. Inspect suppli
 Preload the printed-text OCR model alongside the MRZ reader before file selection. Verify labeled name/CNP/document/address extraction with synthetic printed CI and CEI/CIS cases. Run actual browser OCR in MRZ-plus-printed and printed-only modes, checking conflicts, missing addresses, edits/review, cancellation, pagehide, zero processing network requests and buffer/worker cleanup. Test English/Romanian and both root and Pages hosting. Contract generation and seller/buyer orchestration are out of scope.
 
 Expanded ID verification uses `tests/browser/printed-id.spec.ts` for actual OCR and lifecycle coverage. Browser plugin is not available in this session; Playwright supplies Chromium, Firefox and desktop/mobile WebKit checks. Clear synthetic typography does not establish accuracy on real security backgrounds, glare or phone photographs. Keep reviewed fields unavailable when labels/components cannot be read. Address-text edits clear its components and component edits clear the full text, preventing contradictory reviewed representations.
+
+## Plain-language reading guidance
+
+Keep the primary flow understandable without knowing MRZ or OCR: show the code-row example, ask whether those rows appear in the photo, and guide selection in English/Romanian. Keep technical check names inside the validation disclosure. Verify both choices, camera/PDF guidance and narrow-screen layout when changing these labels; parsing and check-digit rules must remain unchanged.

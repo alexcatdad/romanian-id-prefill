@@ -10,7 +10,7 @@ test('switching languages during offline review preserves accented names and mak
   page.on('request', (request) => { if (/^https?:/.test(request.url())) requests.push(request.url()); });
   await context.setOffline(true);
   await page.getByRole('button', { name: 'Try a synthetic example', exact: true }).click();
-  await page.getByRole('button', { name: 'Read selected MRZ', exact: true }).click();
+  await page.getByRole('button', { name: 'Read my ID', exact: true }).click();
   await expect(page.locator('#cnp')).toHaveValue(createSyntheticMrz().cnp);
   await page.locator('#full-name').fill('EXEMPLU ȘTEFĂNIȚĂ');
   await page.getByRole('button', { name: 'Română', exact: true }).click();
@@ -41,7 +41,7 @@ test.describe('Romanian browser preference', () => {
     await expect(demo).toBeEnabled();
     await context.setOffline(true);
     await demo.click();
-    await page.getByRole('button', { name: 'Citește zona MRZ selectată', exact: true }).click();
+    await page.getByRole('button', { name: 'Citește actul', exact: true }).click();
     await expect(page.locator('#cnp')).toHaveValue(createSyntheticMrz().cnp);
     const confirm = page.getByRole('button', { name: 'Folosește aceste date', exact: true });
     await expect(confirm).toBeDisabled();

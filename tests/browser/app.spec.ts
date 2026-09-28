@@ -38,8 +38,8 @@ test('synthetic TD1 OCR stays offline, clears buffers, and requires fresh review
   page.on('request', (request) => { if (/^https?:/.test(request.url())) requests.push(request.url()); });
   await context.setOffline(true);
   await page.getByRole('button', { name: 'Try a synthetic example', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Select the MRZ' })).toBeVisible();
-  await page.getByRole('button', { name: 'Read selected MRZ', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Find the code rows' })).toBeVisible();
+  await page.getByRole('button', { name: 'Read my ID', exact: true }).click();
   await expect(page.locator('#full-name')).toHaveValue('EXEMPLU ANA MARIA');
   await expect(page.locator('#cnp')).toHaveValue(createSyntheticMrz().cnp);
   await expect(page.getByText('Image discarded', { exact: true })).toBeVisible();
@@ -88,10 +88,10 @@ test('uploaded legacy TD2 image reads offline after decoding and reconstructs CN
   const requests: string[] = [];
   page.on('request', (request) => { if (/^https?:/.test(request.url())) requests.push(request.url()); });
   await page.locator('input[type=file]').setInputFiles({ name: 'synthetic-card.png', mimeType: 'image/png', buffer });
-  await expect(page.getByRole('heading', { name: 'Select the MRZ' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Find the code rows' })).toBeVisible();
   expect(await page.locator('input[type=file]').count()).toBe(0);
   await context.setOffline(true);
-  await page.getByRole('button', { name: 'Read selected MRZ', exact: true }).click();
+  await page.getByRole('button', { name: 'Read my ID', exact: true }).click();
   await expect(page.locator('#full-name')).toHaveValue(fixture.fullName);
   await expect(page.locator('#cnp')).toHaveValue(fixture.cnp);
   await page.getByText('View all validation checks', { exact: true }).click();
@@ -106,7 +106,7 @@ test('failed MRZ check digit cannot prefill or be confirmed, and image buffers a
   fixture.lines[0] = line.slice(0, 14) + String((Number(line[14]) + 1) % 10) + line.slice(15);
   const buffer = await fixturePng(page, fixture.lines);
   await page.locator('input[type=file]').setInputFiles({ name: 'synthetic-invalid.png', mimeType: 'image/png', buffer });
-  await page.getByRole('button', { name: 'Read selected MRZ', exact: true }).click();
+  await page.getByRole('button', { name: 'Read my ID', exact: true }).click();
   await expect(page.getByText('Image discarded', { exact: true })).toBeVisible();
   await expect(page.locator('#full-name')).toHaveValue('');
   await expect(page.getByRole('button', { name: 'Use these details', exact: true })).toBeDisabled();
@@ -118,7 +118,7 @@ test('a CIS-style MRZ without CNP requires an explicit human CNP entry', async (
   const fixture = createSyntheticMrz('TD1', { optional1: '<'.repeat(15) });
   const buffer = await fixturePng(page, fixture.lines);
   await page.locator('input[type=file]').setInputFiles({ name: 'synthetic-cis.png', mimeType: 'image/png', buffer });
-  await page.getByRole('button', { name: 'Read selected MRZ', exact: true }).click();
+  await page.getByRole('button', { name: 'Read my ID', exact: true }).click();
   await expect(page.locator('#full-name')).toHaveValue(fixture.fullName);
   await expect(page.locator('#cnp')).toHaveValue('');
   await expect(page.getByRole('checkbox')).toBeDisabled();
@@ -130,7 +130,7 @@ test('a CIS-style MRZ without CNP requires an explicit human CNP entry', async (
 test('wrong checksum and valid-but-mismatched edited CNPs block confirmation', async ({ page }) => {
   await ready(page);
   await page.getByRole('button', { name: 'Try a synthetic example', exact: true }).click();
-  await page.getByRole('button', { name: 'Read selected MRZ', exact: true }).click();
+  await page.getByRole('button', { name: 'Read my ID', exact: true }).click();
   await expect(page.locator('#cnp')).toHaveValue(createSyntheticMrz().cnp);
   await page.getByRole('checkbox').check();
   await page.locator('#cnp').fill('2960526400010');
@@ -140,7 +140,7 @@ test('wrong checksum and valid-but-mismatched edited CNPs block confirmation', a
   await expect(page.getByRole('button', { name: 'Use these details', exact: true })).toBeDisabled();
   for (const cnp of [withCnpChecksum('296052540001'), withCnpChecksum('196052640001')]) {
     await page.locator('#cnp').fill(cnp);
-    await expect(page.locator('#cnp-issues')).toContainText('does not agree with the MRZ birth date or sex');
+    await expect(page.locator('#cnp-issues')).toContainText('does not match the birth date or sex in the card code');
     await expect(page.getByRole('checkbox')).toBeDisabled();
     await expect(page.getByRole('button', { name: 'Use these details', exact: true })).toBeDisabled();
   }
@@ -267,13 +267,13 @@ test('camera capture stops its stream and sends only a local canvas through the 
     throw failure;
   }
   await page.getByRole('button', { name: 'Capture image', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Select the MRZ' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Find the code rows' })).toBeVisible();
   expect(await page.evaluate(() => (window as typeof window & { __cameraTrack: MediaStreamTrack }).__cameraTrack.readyState)).toBe('ended');
   await page.evaluate(() => {
     const canvas = (window as typeof window & { __cameraCanvas: HTMLCanvasElement }).__cameraCanvas;
     canvas.width = 0; canvas.height = 0;
   });
-  await page.getByRole('button', { name: 'Read selected MRZ', exact: true }).click();
+  await page.getByRole('button', { name: 'Read my ID', exact: true }).click();
   await expect(page.locator('#full-name')).toHaveValue(createSyntheticMrz().fullName);
   await expect(page.locator('#cnp')).toHaveValue(createSyntheticMrz().cnp);
 });

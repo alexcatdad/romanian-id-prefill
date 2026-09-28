@@ -183,7 +183,7 @@ function AppContent() {
       requestAnimationFrame(() => reviewRef.current?.focus({ preventScroll: true }));
     } catch (failure) {
       if (generation.current !== currentGeneration) return;
-      setError(readableError(failure, 'The MRZ could not be read. Try a clearer photo.'));
+      setError(readableError(failure, 'We could not read the code rows. Try a clearer photo.'));
       setPhase('review');
     } finally {
       if (generation.current === currentGeneration) {
@@ -203,7 +203,7 @@ function AppContent() {
       <div className="workspace">
         <section className="panel upload-panel" aria-label={t("Add and read your image")}>
           {phase === 'empty' ? <UploadPanel ready={readerState === 'ready'} preparing={readerState === 'preparing'} error={message(error)} onFile={chooseFile} onCamera={() => setCameraOpen(true)} onDemo={demo} onRetry={prepareReader} /> : null}
-          {phase === 'decoding' || phase === 'reading' ? <div className="processing-state" role="status"><Icon name="scan" className="drop-symbol pulse" /><h2>{phase === 'decoding' ? t("Opening your file") : t("Reading on your device")}</h2><p>{phase === 'decoding' ? t("Preparing a temporary image in browser memory.") : t("Reading identity and printed details locally.")}</p>{phase === 'reading' ? <progress max={1} value={progress} aria-label={t("Local OCR progress")} /> : null}<button className="button button-secondary" onClick={reset}>{t("Cancel and clear")}</button></div> : null}
+          {phase === 'decoding' || phase === 'reading' ? <div className="processing-state" role="status"><Icon name="scan" className="drop-symbol pulse" /><h2>{phase === 'decoding' ? t("Opening your file") : t("Reading on your device")}</h2><p>{phase === 'decoding' ? t("Preparing a temporary image in browser memory.") : t("Reading identity and printed details locally.")}</p>{phase === 'reading' ? <progress max={1} value={progress} aria-label={t("Reading on your device")} /> : null}<button className="button button-secondary" onClick={reset}>{t("Cancel and clear")}</button></div> : null}
           {phase === 'pdf' && pdfReader.current ? <PdfPagePicker reader={pdfReader.current} pageCount={pdfPages} onSelect={(canvas) => { void acceptCanvas(canvas); }} onCancel={reset} /> : null}
           {phase === 'preview' && image ? <ImageEditor image={image} onRead={read} onCancel={reset} /> : null}
           {phase === 'review' || phase === 'confirmed' ? <div className="scan-result"><div className="result-heading"><span className="result-symbol"><Icon name="shield" /></span><div><h2>{t("Image discarded")}</h2><p className="panel-description">{t("Your image and reading buffers have been cleared.")}</p></div></div>{scan ? <ValidationSummary scan={scan} /> : <div className="notice warning" role="alert"><Icon name="alert" /><p>{message(error)}</p></div>}<button className="button button-secondary" onClick={reset}>{t("Read another image")}</button></div> : null}

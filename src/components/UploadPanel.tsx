@@ -11,7 +11,7 @@ export function UploadPanel({ ready, preparing, error, onFile, onCamera, onDemo,
   const [dragging, setDragging] = useState(false);
   return <>
     <h2>{t("Add your identity card")}</h2>
-    <p className="panel-description">{t("Add one side of your ID. Include the whole card for printed details, or just the MRZ for identity fields.")}</p>
+    <p className="panel-description">{t("Add a clear photo of one side of your ID. Keep the whole card visible, with no glare.")}</p>
     <div className={`drop-zone ${dragging ? 'dragging' : ''}`} onDragOver={(event) => { event.preventDefault(); if (ready) setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={(event) => { event.preventDefault(); setDragging(false); const file = event.dataTransfer.files[0]; if (ready && file) onFile(file); }}>
       <Icon name="scan" className="drop-symbol" />
       <h3>{t("Drop an image or PDF here")}</h3>

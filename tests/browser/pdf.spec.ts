@@ -57,10 +57,10 @@ test('PDF page selection and OCR stay local, preserve mandatory review, and dest
   await expect(page.getByText('Page 2 of 2', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Next page', exact: true })).toBeDisabled();
   await page.getByRole('button', { name: 'Use this page', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Select the MRZ', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Find the code rows', exact: true })).toBeVisible();
   await expect.poll(async () => (await resources(page)).activePdfWorkers).toBe(0);
   await context.setOffline(true);
-  await page.getByRole('button', { name: 'Read selected MRZ', exact: true }).click();
+  await page.getByRole('button', { name: 'Read my ID', exact: true }).click();
   await expect(page.locator('#full-name')).toHaveValue(fixture.fullName);
   await expect(page.locator('#cnp')).toHaveValue(fixture.cnp);
   await expect(page.getByRole('button', { name: 'Use these details', exact: true })).toBeDisabled();
@@ -126,7 +126,7 @@ test('scanned PDF pages use the same local image OCR pipeline', async ({ page })
   await upload(page, createScannedPdf(jpeg, 1800, 1000));
   await expect(page.getByText('Page 1 of 1', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Use this page', exact: true }).click();
-  await page.getByRole('button', { name: 'Read selected MRZ', exact: true }).click();
+  await page.getByRole('button', { name: 'Read my ID', exact: true }).click();
   await expect(page.locator('#cnp')).toHaveValue(fixture.cnp);
   await expect(page.locator('#full-name')).toHaveValue(fixture.fullName);
   expect(requests).toEqual([]);
@@ -143,7 +143,7 @@ test('Romanian PDF page selection keeps document state and makes no language-swi
   await page.getByRole('button', { name: 'Pagina următoare', exact: true }).click();
   await expect(page.getByText('Pagina 2 din 2', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Folosește această pagină', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Citește zona MRZ selectată', exact: true })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Citește actul', exact: true })).toBeEnabled();
   expect(requests).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });

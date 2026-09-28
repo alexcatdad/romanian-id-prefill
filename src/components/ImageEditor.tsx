@@ -179,21 +179,25 @@ export function ImageEditor({ image, onRead, onCancel }: ImageEditorProps) {
   }
 
   return (
-    <section className="image-editor" aria-label={t("Select the machine-readable zone")}>
-      <h2>{mode === 'mrz' ? t("Select the MRZ") : t("Read the printed side")}</h2>
-      <fieldset className="read-mode"><legend>{t("Which side are you reading?")}</legend>
-        <label><input type="radio" name="read-mode" checked={mode === 'mrz'} disabled={reading} onChange={() => setMode('mrz')} />{t("Side with MRZ")}</label>
-        <label><input type="radio" name="read-mode" checked={mode === 'printed'} disabled={reading} onChange={() => { setMode('printed'); setSelection({ top: 0, bottom: 100 }); }} />{t("Printed side without MRZ")}</label>
+    <section className="image-editor" aria-label={t("Select the code rows on your card")}>
+      <h2>{mode === 'mrz' ? t("Find the code rows") : t("Read the printed side")}</h2>
+      <div className="code-example" role="img" aria-label={t("Example of the code rows")}>
+        <p>{t("Look for a block of text like this:")}</p>
+        <span aria-hidden="true">{'IDROU...<<<<<<<<<<<<'}<br />{'123456...<<<<<<<<<<<'}</span>
+      </div>
+      <fieldset className="read-mode"><legend>{t("Can you see rows like these on your photo?")}</legend>
+        <label><input type="radio" name="read-mode" checked={mode === 'mrz'} disabled={reading} onChange={() => setMode('mrz')} />{t("Yes, these rows are visible")}</label>
+        <label><input type="radio" name="read-mode" checked={mode === 'printed'} disabled={reading} onChange={() => { setMode('printed'); setSelection({ top: 0, bottom: 100 }); }} />{t("No, read the other printed details")}</label>
       </fieldset>
-      <p className="field-hint">{mode === 'mrz' ? t("The whole card is also read for printed details. Include its complete address in the image.") : t("Printed text has no MRZ checks. Every extracted field needs your review.")}</p>
+      <p className="field-hint">{mode === 'mrz' ? t("These rows are usually at the bottom: on the front of older cards and the back of newer cards. We also read the other visible details.") : t("We can read the printed details, but cannot cross-check them against the code rows. Please check every field.")}</p>
       <p id={instructionsId} className="editor-instructions">
-        {mode === 'mrz' ? t("Select every row of letters, numbers and < in the MRZ. Drag its edges or use the controls below.") : t("Keep the complete card visible and upright. This reads the whole image.")}
+        {mode === 'mrz' ? t("Move the purple edges to include all two or three rows of letters, numbers and < symbols.") : t("Keep the complete card visible and upright. This reads the whole image.")}
       </p>
       <canvas
         ref={previewRef}
         className="image-editor-preview"
         role="img"
-        aria-label={t("Your identity card with the selected MRZ area highlighted")}
+        aria-label={t("Your ID photo with the code rows highlighted")}
         aria-describedby={instructionsId}
         onPointerDown={startDrag}
         onPointerMove={moveDrag}
@@ -241,7 +245,7 @@ export function ImageEditor({ image, onRead, onCancel }: ImageEditorProps) {
       <div className="image-editor-actions">
         <button className="button button-secondary" type="button" disabled={reading} onClick={onCancel}>{t("Discard image")}</button>
         <button className="button button-primary" type="button" disabled={reading} onClick={readSelection}>
-          {reading ? t("Preparing selection…") : mode === 'mrz' ? t("Read selected MRZ") : t("Read printed details")}
+          {reading ? t("Preparing selection…") : mode === 'mrz' ? t("Read my ID") : t("Read printed details")}
         </button>
       </div>
     </section>

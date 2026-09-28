@@ -230,7 +230,7 @@ export function CameraDialog({ onCapture, onClose }: CameraDialogProps) {
           <h2 id={titleId}>{t("Take a photo")}</h2>
           <button ref={closeButtonRef} className="button button-secondary" type="button" onClick={close}>{t("Close camera")}</button>
         </div>
-        <p id={instructionsId}>{t("Keep the card flat and well lit. Capture an image, then select its MRZ.")}</p>
+        <p id={instructionsId}>{t("Keep the whole card flat, well lit and free of glare. Take a photo; we will show you what to select next.")}</p>
         <video ref={videoRef} className="camera-preview" muted playsInline aria-label={t("Live camera preview")} onLoadedMetadata={videoReady} onCanPlay={videoReady} />
         {state === 'starting' && <p role="status">{t("Waiting for camera access…")}</p>}
         {error && <p className="camera-error field-error" role="alert">{message(error)}</p>}
