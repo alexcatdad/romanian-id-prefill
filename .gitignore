@@ -1,0 +1,11 @@
+node_modules/
+dist/
+playwright-report/
+test-results/
+*.tsbuildinfo
+.DS_Store
+public/ocr/core/
+public/ocr/worker.min.js
+public/ocr/LICENSE.tesseract.txt
+public/ocr/LICENSE.core.txt
+public/licenses/

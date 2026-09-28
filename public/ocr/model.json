@@ -1,0 +1,10 @@
+{
+  "source": "https://raw.githubusercontent.com/DoubangoTelecom/tesseractMRZ/1e7adfecda5f3c9ae1fb12cf6b4b8c3958c63e46/tessdata_fast/mrz.traineddata",
+  "commit": "1e7adfecda5f3c9ae1fb12cf6b4b8c3958c63e46",
+  "upstreamArchived": true,
+  "license": "BSD-3-Clause",
+  "rawBytes": 1452847,
+  "gzipBytes": 1313108,
+  "sha256": "1f97c4f1c7e6cbb8d7b794741833aab00b254265e0c16ddac589bbf07458327f",
+  "rawSha256": "ece2a54f125a73792f9cec74e6f8e62f6e5e00c7f19153ba865af689be5b5f01"
+}
